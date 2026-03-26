@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trash - CloudShare</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="dashboard-page">
+    <div class="dashboard-container">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+                    ☰
+                </button>
+                <div class="logo">
+                    <span class="logo-icon">☁️</span>
+                    <span class="logo-text">CloudShare</span>
+                </div>
+            </div>
+
+            <div class="topbar-center">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input"
+                        placeholder="🔍 Search trash..."
+                    >
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <button class="icon-btn notification-btn" title="Notifications">
+                    🔔
+                </button>
+                
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn" onclick="toggleUserMenu()">
+                        <span class="user-avatar">👤</span>
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    
+                    <div class="user-dropdown" id="userDropdown" style="display: none;">
+                        <a href="/settings.html" class="dropdown-item">
+                            <span class="item-icon">⚙️</span>
+                            <span>Settings</span>
+                        </a>
+                        <a href="#" class="dropdown-item" onclick="logout()">
+                            <span class="item-icon">🚪</span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-wrapper">
+            <aside class="sidebar" id="sidebar">
+                <nav class="sidebar-nav">
+                    <a href="/dashboard.html" class="nav-item">
+                        <span class="nav-icon">📁</span>
+                        <span class="nav-text">My Files</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">🕐</span>
+                        <span class="nav-text">Recent</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">⭐</span>
+                        <span class="nav-text">Favorites</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">🔗</span>
+                        <span class="nav-text">Shared by me</span>
+                    </a>
+                    <a href="/shared-with-me.html" class="nav-item">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-text">Shared with me</span>
+                    </a>
+                    <a href="/trash.html" class="nav-item active">
+                        <span class="nav-icon">🗑️</span>
+                        <span class="nav-text">Trash</span>
+                    </a>
+                    <a href="/settings.html" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="storage-widget">
+                    <div class="storage-header">
+                        <span class="storage-title">Storage</span>
+                    </div>
+                    <div class="storage-info">
+                        <span id="storageUsed">0 GB</span>
+                        <span> of </span>
+                        <span id="storageTotal">100 GB</span>
+                    </div>
+                    <div class="storage-bar">
+                        <div class="storage-bar-fill" id="storageBarFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="file-area">
+                <div class="page-header">
+                    <h1 class="page-title">🗑️ Trash</h1>
+                </div>
+
+                <div class="action-bar">
+                    <div class="action-left">
+                        <button class="btn" onclick="restoreSelected()" id="restoreSelectedBtn" disabled>
+                            <span>↩️</span> Restore Selected
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteSelectedPermanently()" id="deleteSelectedBtn" disabled>
+                            <span>🗑️</span> Delete Permanently
+                        </button>
+                        <button class="btn btn-danger" onclick="emptyTrash()">
+                            <span>🗑️</span> Empty Trash
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-banner">
+                    <span class="info-icon">ℹ️</span>
+                    <span>Items in trash will be permanently deleted after 30 days</span>
+                </div>
+
+                <div class="trash-container" id="trashContainer">
+                    <div class="trash-card" data-id="1">
+                        <div class="trash-checkbox">
+                            <input type="checkbox" onchange="updateSelection()">
+                        </div>
+                        <div class="trash-icon">📁</div>
+                        <div class="trash-content">
+                            <h4 class="trash-name">Old Projects</h4>
+                            <p class="trash-meta">
+                                Deleted: 5 days ago • 25 items • 128 MB
+                            </p>
+                            <p class="trash-expiry">
+                                Auto-delete in: <span class="expiry-days">25 days</span>
+                            </p>
+                        </div>
+                        <div class="trash-actions">
+                            <button class="btn btn-sm" onclick="restoreItem(1)">
+                                ↩️ Restore
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteForever(1)">
+                                🗑️ Delete Forever
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="trash-card" data-id="2">
+                        <div class="trash-checkbox">
+                            <input type="checkbox" onchange="updateSelection()">
+                        </div>
+                        <div class="trash-icon">📄</div>
+                        <div class="trash-content">
+                            <h4 class="trash-name">old_report.pdf</h4>
+                            <p class="trash-meta">
+                                Deleted: 15 days ago • 2.3 MB
+                            </p>
+                            <p class="trash-expiry">
+                                Auto-delete in: <span class="expiry-days">15 days</span>
+                            </p>
+                        </div>
+                        <div class="trash-actions">
+                            <button class="btn btn-sm" onclick="restoreItem(2)">
+                                ↩️ Restore
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteForever(2)">
+                                🗑️ Delete Forever
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="trash-card expiring-soon" data-id="3">
+                        <div class="trash-checkbox">
+                            <input type="checkbox" onchange="updateSelection()">
+                        </div>
+                        <div class="trash-icon">🖼️</div>
+                        <div class="trash-content">
+                            <h4 class="trash-name">vacation.jpg</h4>
+                            <p class="trash-meta">
+                                Deleted: 28 days ago • 1.5 MB
+                            </p>
+                            <p class="trash-expiry warning">
+                                ⚠️ Auto-delete in: <span class="expiry-days">2 days</span>
+                            </p>
+                        </div>
+                        <div class="trash-actions">
+                            <button class="btn btn-sm" onclick="restoreItem(3)">
+                                ↩️ Restore
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteForever(3)">
+                                🗑️ Delete Forever
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="empty-state" id="emptyState" style="display: none;">
+                        <div class="empty-icon">🗑️</div>
+                        <h3>Trash is empty</h3>
+                        <p>Items you delete will appear here for 30 days</p>
+                    </div>
+                </div>
+
+                <div class="trash-summary">
+                    <p>💾 Storage in Trash: <strong id="trashSize">5.2 GB</strong></p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal" id="confirmDeleteModal" style="display: none;">
+        <div class="modal-backdrop" onclick="closeConfirmModal()"></div>
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">⚠️ Confirm Delete</h3>
+                    <button class="modal-close" onclick="closeConfirmModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage">Are you sure you want to permanently delete this item? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" onclick="closeConfirmModal()">Cancel</button>
+                    <button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">
+                        Delete Forever
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/trash.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthentication();
+            loadUserInfo();
+            loadStorageInfo();
+            loadTrashItems();
+        });
+    </script>
+</body>
+</html>

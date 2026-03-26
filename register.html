@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register - CloudShare</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body{
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* Container */
+.auth-container{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+/* Logo */
+.auth-logo{
+  font-size:30px;
+  font-weight:bold;
+  margin-bottom:25px;
+  animation: fadeIn 1s ease;
+}
+.auth-logo a{
+  text-decoration:none;
+  color:white;
+}
+.logo-icon{
+  font-size:34px;
+}
+
+/* Glass Card */
+.auth-box{
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(12px);
+  padding:40px;
+  width:380px;
+  border-radius:16px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.25);
+  color:white;
+  animation: slideUp 0.6s ease;
+}
+
+/* Titles */
+.auth-title{
+  text-align:center;
+  margin-bottom:8px;
+}
+.auth-subtitle{
+  text-align:center;
+  color:#e0e0e0;
+  font-size:14px;
+  margin-bottom:25px;
+}
+
+/* Alert */
+.alert {
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: none;
+}
+
+.alert-error {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: 1px solid rgba(220, 38, 38, 0.5);
+}
+
+.alert-success {
+  background: rgba(34, 197, 94, 0.9);
+  color: white;
+  border: 1px solid rgba(22, 163, 74, 0.5);
+}
+
+.alert-icon {
+  margin-right: 8px;
+}
+
+/* Inputs */
+.form-group{
+  margin-bottom:18px;
+}
+
+.form-group label{
+  display:block;
+  font-size:14px;
+  margin-bottom:6px;
+}
+
+.form-input{
+  width:100%;
+  padding:12px;
+  border:1px solid rgba(255,255,255,0.3);
+  border-radius:10px;
+  font-size:14px;
+  background: rgba(255,255,255,0.1);
+  color:white;
+  transition:0.3s;
+}
+
+.form-input::placeholder{
+  color:#ddd;
+}
+
+.form-input:focus{
+  border-color:#fff;
+  box-shadow:0 0 8px rgba(255,255,255,0.5);
+  outline:none;
+  transform: scale(1.02);
+}
+
+/* Password */
+.password-wrapper{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+
+.toggle-password{
+  position:absolute;
+  right:10px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-size:18px;
+}
+
+/* Hint */
+.form-hint{
+  font-size:12px;
+  color:#ddd;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Checkbox */
+.checkbox-label{
+  display:flex;
+  align-items:center;
+  font-size:13px;
+}
+.checkbox-label input{
+  margin-right: 8px;
+}
+
+/* Button */
+.btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:16px;
+  margin-top: 10px;
+}
+
+.btn-primary{
+  background: linear-gradient(135deg,#ff7eb3,#ff758c);
+  color:white;
+  font-weight:bold;
+  transition:0.3s;
+}
+
+.btn-primary:hover{
+  transform: translateY(-2px);
+  box-shadow:0 10px 20px rgba(0,0,0,0.3);
+}
+
+.btn-primary:disabled{
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Footer */
+.auth-footer{
+  text-align:center;
+  margin-top:20px;
+  font-size:14px;
+}
+
+.auth-footer a{
+  color:#fff;
+  text-decoration:underline;
+  font-weight:bold;
+}
+
+/* Animations */
+@keyframes slideUp{
+  from{
+    opacity:0;
+    transform:translateY(30px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes fadeIn{
+  from{opacity:0;}
+  to{opacity:1;}
+}
+
+</style>
+</head>
+
+<body class="auth-page">
+
+<div class="auth-container">
+
+<div class="auth-logo">
+  <a href="/">
+    <span class="logo-icon">☁️</span>
+    <span class="logo-text">CLOUDSHARE</span>
+  </a>
+</div>
+
+<div class="auth-box">
+
+<h2 class="auth-title">Create Your Account</h2>
+<p class="auth-subtitle">Start your cloud storage journey</p>
+
+<div id="alertMessage" class="alert" style="display:none;"></div>
+
+<form id="registerForm" class="auth-form">
+
+<div class="form-group">
+<label for="name">Full Name</label>
+<input type="text" id="name" name="name" class="form-input" placeholder="Enter your full name" required>
+</div>
+
+<div class="form-group">
+<label for="email">Email Address</label>
+<input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required>
+</div>
+
+<div class="form-group">
+<label for="password">Password</label>
+
+<div class="password-wrapper">
+<input type="password" id="password" name="password" class="form-input" placeholder="Create a password" required minlength="8">
+<button type="button" class="toggle-password" onclick="togglePasswordVisibility('password')">
+<span id="password-icon">👁️</span>
+</button>
+</div>
+
+<small class="form-hint">At least 8 characters</small>
+</div>
+
+<div class="form-group">
+<label for="confirmPassword">Confirm Password</label>
+
+<div class="password-wrapper">
+<input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Re-enter your password" required minlength="8">
+<button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">
+<span id="confirmPassword-icon">👁️</span>
+</button>
+</div>
+</div>
+
+<div class="form-group">
+<label class="checkbox-label">
+<input type="checkbox" id="terms" required>
+<span>I agree to Terms & Conditions</span>
+</label>
+</div>
+
+<button type="submit" class="btn btn-primary btn-block" id="registerBtn">
+Create Account
+</button>
+
+</form>
+
+<div class="auth-footer">
+<p>Already have an account? <a href="/login.html">Login</a></p>
+</div>
+
+</div>
+</div>
+
+<!-- Load Scripts -->
+<script src="/js/utils.js"></script>
+<script src="/js/auth.js"></script>
+
+<script>
+function togglePasswordVisibility(fieldId) {
+  const input = document.getElementById(fieldId);
+  const icon = document.getElementById(fieldId + "-icon");
+
+  if(input.type === "password") {
+    input.type = "text";
+    icon.innerHTML = "🙈";
+  } else {
+    input.type = "password";
+    icon.innerHTML = "👁️";
+  }
+}
+</script>
+
+</body>
+</html>

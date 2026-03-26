@@ -1,0 +1,94 @@
+.navbar .nav-link {
+  color: #1b1b1b !important;
+  font-weight: 400;
+}
+.logo{
+    background-image: url("https://res.cloudinary.com/dqicp7s0z/image/upload/v1766218757/restaurant-icon_su1xwi.avif");
+    height:80px;
+    width:80px;
+    background-size:cover;
+    border-radius:45px;
+    margin-left: 30px;
+}
+.navbar-nav{
+    font-size: 25px;
+}
+.background{
+background-image: url("https://res.cloudinary.com/dqicp7s0z/image/upload/v1766226907/background_jcm3vm.jpg");
+background-size: cover;
+height:100vh;
+}
+.padding{
+    padding:300px;
+}
+.restaurant-name{
+    color: rgb(56, 109, 91);
+    font-size:60px;
+}
+.tagline{
+    font-family: 'Poppins';
+  font-size: 30px;
+  color: #3e3a35;
+}
+.btn{
+    padding:10px;
+    border-radius:25px;
+    border-style:inset;
+    border-width:3px;
+    border-color:aliceblue;
+    color:rgb(10, 10, 10);
+    font-size:18px;
+    background-color: rgba(8, 9, 12, 0.177);
+}
+.card1{
+    border-radius:20px;
+    border-width:2px;
+    border-color: rgb(112, 127, 127);
+    border-style:solid;
+}
+.para{
+    color: rgb(156, 110, 164);
+    font-size: 18px;
+}
+h5{
+    color: rgb(80, 58, 131);
+}
+.card2{
+    height: auto;
+     border-radius:20px;
+    border-width:2px;
+    border-color: rgb(112, 127, 127);
+    border-style:solid;
+    width:fit-content;
+}   
+.aboutimg{
+    height: 400px;
+    border-radius: 250px;
+    margin-top: 30px;
+    padding: 30px;
+    width: 500px;
+}
+.aboutpara{
+    padding:40px;
+    font-size:18px;
+    margin-top: 70px;
+}
+.menuimg{
+    height: 500px;
+    width: 450px;
+    margin-top: 30px;
+    padding: 30px;
+}
+.m1{
+    height: 150px;
+    width: 200px;
+    border-radius: 5px;
+}
+.homedimg{
+    height: 100px;
+    width: 120px;
+}
+.embed-responsive-item{
+    height: 200px;
+    width: 200px;
+}

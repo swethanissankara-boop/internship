@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link
+    rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    crossorigin="anonymous"
+  />
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restaurant Website</title>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-secondary fixed-top">
+  <a class="navbar-brand logo" href="#"></a>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse"
+    data-target="#navbarNavAltMarkup">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+    <div class="navbar-nav ml-auto ">
+      <a class="nav-link active" href="#">Home</a>
+      <a class="nav-link" href="#about">About</a>
+      <a class="nav-link" href="#menu">Menu</a>
+      <a class="nav-link" href="#services">Services</a>
+      <a class="nav-link" href="#contact">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HOME SECTION -->
+<div id="sectionmainpage" class="collapse  background d-flex justify-content-start align-items-center">
+  <div class="text-center padding">
+    <h1 class="restaurant-name">Indian Restaurant</h1>
+    <p class="tagline">Delicious Food, Fresh Taste</p>
+     <button class="btn btn-secondary" onclick="display('sectionknowmore')">
+      Know More
+    </button>
+  </div>
+</div>
+
+<!-- KNOW MORE SECTION -->
+<div id="sectionknowmore" class="collapse" style="display:none;">
+  <div class="container mt-5">
+
+    <div class="row">
+
+      <!-- OUR VISION -->
+      <div class="col-12 col-lg-4">
+        <div class="card1 shadow text-center mb-4 p-3">
+          <h3 style="color: blueviolet;font-family:'Gill Sans MT';text-decoration: underline;" class="m-3">
+            Our Vision
+          </h3>
+          <p class="para m-2">
+            Our vision is to bring the authentic flavors of India to every food lover
+            by serving delicious, affordable, and hygienic meals.
+          </p>
+          <p class="para m-2">
+            We aim to create a place where people can enjoy traditional Indian food
+            in a warm and welcoming environment.
+          </p>
+          <p class="para m-2">
+            We strive to become a trusteds restaurant known for quality, consistency,
+            and customer satisfaction while preserving the rich heritage of Indian cuisine.
+          </p>
+        </div>
+      </div>
+
+      <!-- OUR MISSION -->
+      <div class="col-12 col-lg-4">
+        <div class=" shadow card1 text-center mb-4 p-3">
+          <h3 style="color: blueviolet;font-family:'Gill Sans MT';text-decoration: underline;" class="m-3">
+            Our Mission
+          </h3>
+          <p class="para m-2">
+            Our mission is to deliver high-quality Indian cuisine using fresh ingredients
+            and traditional cooking methods.
+          </p>
+          <p class="para m-2">
+            We are committed to continuous improvement, cleanliness, and innovation
+            to meet the changing tastes and expectations of our customers.
+          </p>
+          <p class="para m-2">
+            To deliver high-quality Indian cuisine while maintaining excellent customer
+            service and a memorable dining experience.
+          </p>
+        </div>
+      </div>
+
+      <!-- POPULAR DISHES -->
+      <div class="col-12 col-lg-4">
+        <div class="card1 shadow para mb-4 p-3">
+          <h3 style="color: blueviolet;font-family:'Gill Sans MT';text-decoration: underline;" class="m-3">
+            Our Popular Dishes
+          </h3>
+          <ul style="list-style-type:circle">
+            <li>Chicken Biryani</li>
+            <li>Butter Naan & Paneer Butter Masala</li>
+            <li>Veg Meals</li>
+            <li>Mutton Curry</li>
+            <li>Gulab Jamun</li>
+            <li>Ice Cream</li>
+            <li>Veg Manchuria</li>
+            <li>Fish Fry</li>
+            <li>Fish Tikka</li>
+            <li>Sambar Rice</li>
+            <li>Curd</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SPECIAL FEATURES -->
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-4">
+        <div class="text-center shadow card2 para p-4">
+          <h3 style="color: blueviolet;font-family:'Gill Sans MT';text-decoration: underline;" class="m-3">
+            Special Features
+          </h3>
+
+          <h5>Spice Levels</h5>
+          <p>Customize spice levels as per your taste.</p>
+
+          <h5>Vegan Options</h5>
+          <p>Wide range of vegetarian & vegan dishes.</p>
+
+          <h5>Free Wi-Fi</h5>
+          <p>Enjoy free Wi-Fi while dining.</p>
+
+          <h5>Parking</h5>
+          <p>Convenient parking available.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- BACK BUTTON -->
+    <div class="text-center mt-3">
+      <button class="btn btn-secondary section" onclick="display('sectionmainpage')">
+        Back to Home
+      </button>
+    </div>
+
+  </div>
+</div>
+<div id="about">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 col-lg-6">
+        <img src="https://res.cloudinary.com/dqicp7s0z/image/upload/v1766256648/about_bdjwx5.jpg" class="aboutimg">
+      </div>
+      <div class="col-12 col-lg-6 aboutpara">
+        <h2 style="color: brown;" class="pb-3">About Us</h2>
+        <p style="color: rgb(108, 65, 130);"> Indian Restaurant is dedicated to serving authentic Indian cuisine
+        prepared with fresh ingredients and traditional spices.
+        Our focus is on quality, taste, and customer satisfaction.</p>
+        <p style="color: rgb(108, 65, 130);"> We offer a warm and friendly environment where families and friends
+        can enjoy delicious meals together. Every dish is cooked with care
+        to give you a memorable dining experience.</p>
+      </div>
+       <div class=" text-center mt-5 p-5 embed-responsive embed-responsive-16by9 " >
+  <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/Zw27Lqqx7H4?rel=0" allowfullscreen></iframe>
+</div>
+</div>
+  </div>
+</div>
+<div id="menu">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-12">
+        <div class="text-center">
+        <h1 class="mt-5">Menu Section</h1>
+        <img src="https://res.cloudinary.com/dqicp7s0z/image/upload/v1766256658/menu_aserqb.webp" class="menuimg">
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="card1 shadow text-center mb-4 p-3">
+          <img src="https://www.licious.in/blog/wp-content/uploads/2020/12/Hyderabadi-chicken-Biryani.jpg" class="m1">
+          <h3 class="mt-4" style="color: rgb(25, 49, 71);font-family:'Gill Sans MT'">🍗 Chicken Biryani</h3>
+          <p class="mt-3">A classic Indian rice dish cooked with aromatic basmati rice.
+Prepared using tender chicken pieces marinated in rich spices.
+Slow-cooked on a dum flame for deep and authentic flavor.
+Perfect balance of spices, herbs, and saffron aroma.
+Served hot with raita and salan on the side.
+A favorite dish loved by all age groups.</p>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <div class="card1 shadow text-center mb-4 p-3">
+          <img src="https://www.indianveggiedelight.com/wp-content/uploads/2017/09/instant-pot-paneer-butter-masala-featured.jpg" class="m1">
+          <h3 style="color: rgb(25, 49, 71);font-family:'Gill Sans MT'" class="mt-4">
+            🥘 Paneer Butter Masala
+          </h3>
+          <p class="mt-3">Soft paneer cubes cooked in a creamy tomato-based gravy.
+Flavored with butter, fresh cream, and mild Indian spices.
+Rich texture with a smooth and slightly sweet taste.
+Best enjoyed with butter naan or roti.
+Perfect choice for vegetarians and paneer lovers.
+A royal North Indian delicacy.</p>
+        </div>
+      </div>
+
+      <!-- POPULAR DISHES -->
+      <div class="col-12 col-lg-4">
+        <div class="card1 shadow text-center mb-4 p-3">
+          <img src="https://tse2.mm.bing.net/th/id/OIP.77ZYbEBjo31Gx8Urd5dwqgHaD5?pid=Api&P=0&h=180" class="m1">
+          <h3 style="color: rgb(25, 49, 71);font-family:'Gill Sans MT'" class="mt-4">
+🫓 Butter Naan
+          </h3>
+          <p class="mt-3">Freshly prepared soft Indian bread baked in a tandoor.
+Brushed with pure butter for rich taste and aroma.
+Light, fluffy, and easy to tear.
+Pairs perfectly with curries and gravies.
+Served hot for the best dining experience.
+A must-have with North Indian dishes.</p>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <div class="card1 shadow text-center mb-4 p-3">
+          <img src="https://tse3.mm.bing.net/th/id/OIP.2nSSjINEjKTPbNUUNpCnNAHaEK?pid=Api&P=0&h=180" class="m1">
+          <h3 style="color: rgb(25, 49, 71);font-family:'Gill Sans MT'" class="mt-4">
+🍛 Veg Meals
+          </h3>
+          <p class="mt-3">A complete traditional South Indian vegetarian meal.
+Includes rice, sambar, rasam, curry, and curd.
+Prepared using fresh seasonal vegetables.
+Balanced flavors with authentic home-style cooking.
+Healthy, filling, and comforting.
+Served on a banana leaf or plate.</p>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <div class="card1 shadow text-center mb-4 p-3">
+          <img src="https://i.pinimg.com/736x/54/ad/d1/54add12fedf6dcc0fcfceaa592c41813.jpg" class="m1">
+          <h3 style="color: rgb(25, 49, 71);font-family:'Gill Sans MT'" class="mt-4">
+🍖 Mutton Curry
+          </h3>
+          <p class="mt-3">Slow-cooked mutton pieces in a spicy onion-based gravy.
+Marinated with traditional Indian spices for rich flavor.
+Tender meat that melts in the mouth.
+Perfect blend of heat and aroma.
+Best enjoyed with rice or roti.
+A favorite for non-vegetarian food lovers.</p>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <div class="card1 shadow text-center mb-4 p-3">
+          <img src="https://tse3.mm.bing.net/th/id/OIP.B32bansRI7RS3yfbUSEBNwHaHa?pid=Api&P=0&h=180" class="m1">
+          <h3 style="color: rgb(25, 49, 71);font-family:'Gill Sans MT'" class="mt-4">
+🍨 Gulab Jamun
+          </h3>
+          <p class="mt-3">Soft milk-based dumplings soaked in sugar syrup.
+Flavored with cardamom for a sweet aroma.
+Warm, juicy, and delicious dessert.
+Perfect ending to a hearty meal.
+Loved by both kids and adults.
+A classic Indian sweet treat.</p>
+        </div>
+      </div>
+  </div>
+</div>
+</div>
+<div id="services">
+  <div class="text-center">
+<h1 class="mt-5">Services provided</h1>
+</div>
+<div class="container mt-5">
+  <div class="row text-center">
+    <div class="col-12 col-md-6 col-lg-3 mb-4">
+      <div class="p-4 shadow bg-light rounded h-100">
+        <img src="https://img.icons8.com/color/96/ingredients.png" alt="Fresh Ingredients" class="mb-3">
+        <h5>Fresh Ingredients</h5>
+        <p>
+          We use only fresh, high-quality vegetables, meats, and spices.
+          Each dish is prepared daily to ensure great taste, nutrition, and hygiene.
+          Our commitment to fresh ingredients guarantees authentic flavors.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3 mb-4">
+      <div class="p-4 shadow bg-light h-100">
+        <img src="https://tse3.mm.bing.net/th/id/OIP.hH8UzspHs_sCHrEhS6_ZEwHaFP?pid=Api&P=0&h=180" alt="Home Delivery" class="mb-3 homedimg">
+        <h5>Home Delivery</h5>
+        <p>
+          Quick and reliable home delivery service right to your doorstep.
+          Food is packed safely and delivered hot and fresh.
+          We ensure timely delivery so you can enjoy meals without waiting.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3 mb-4">
+      <div class="p-4 shadow bg-light rounded h-100">
+        <img src="https://img.icons8.com/color/96/chef-hat.png" alt="Best Chefs" class="mb-3">
+        <h5>Best Chefs</h5>
+        <p>
+          Our experienced chefs specialize in Indian cuisine.
+          Every dish is cooked with care, passion, and traditional recipes.
+          They ensure consistent taste and quality in every meal.
+        </p>
+      </div>
+    </div>
+
+    <!-- SERVICE 4: Hygienic Kitchen -->
+    <div class="col-12 col-md-6 col-lg-3 mb-4">
+      <div class="p-4 shadow bg-light rounded h-100">
+        <img src="https://img.icons8.com/color/96/kitchen-room.png" alt="Hygienic Kitchen" class="mb-3">
+        <h5>Hygienic Kitchen</h5>
+        <p>
+          We maintain strict cleanliness standards in the kitchen.
+          Regular sanitation ensures a safe and healthy cooking environment.
+          Food safety and hygiene are our top priority.
+        </p>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+<div id="contact">
+<!-- FOOTER -->
+<footer class="bg-secondary text-white mt-5 pt-5 pb-3">
+  <div class="container">
+    <div class="row">
+
+      <!-- COLUMN 1: Restaurant Info -->
+      <div class="col-12 col-md-4 mb-4">
+        <h4>Indian Restaurant</h4>
+        <p>
+          Serving authentic Indian cuisine with fresh ingredients and traditional flavors.
+          Experience quality, taste, and warmth in every meal.
+        </p>
+      </div>
+
+      <!-- COLUMN 2: Quick Links -->
+      <div class="col-12 col-md-4 mb-4">
+        <h4>Quick Links</h4>
+        <ul class="list-unstyled">
+          <li><a href="#" class="text-white">Home</a></li>
+          <li><a href="#about" class="text-white">About</a></li>
+          <li><a href="#menu" class="text-white">Menu</a></li>
+          <li><a href="#services" class="text-white">services</a></li>
+          <li><a href="#contact" class="text-white">Contact</a></li>
+        </ul>
+      </div>
+
+      <!-- COLUMN 3: Contact Info -->
+      <div class="col-12 col-md-4 mb-4">
+        <h4>Contact Info</h4>
+        <p>Address: 123, Main Street, City, India</p>
+        <p>Phone: +91 **********</p>
+        <p>Email: contact@indianrestaurant.com</p>
+      </div>
+
+    </div>
+    <div class="text-center mt-3 pt-3 border-top border-light">
+      <p class="mb-0">Copyright © 2025 Indian Restaurant. All rights reserved.</p>
+    </div>
+
+  </div>
+</footer>
+</div>
+
+<script
+  src="https://d2clawv67efefq.cloudfront.net/ccbp-static-website/js/ccbp-ui-kit.js">
+</script>
+</body>
+</html>

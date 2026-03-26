@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - CloudShare</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="dashboard-page">
+    <div class="dashboard-container">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
+                <div class="logo">
+                    <span class="logo-icon">☁️</span>
+                    <span class="logo-text">CloudShare</span>
+                </div>
+            </div>
+
+            <div class="topbar-center">
+                <div class="search-box">
+                    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search...">
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <button class="icon-btn notification-btn" title="Notifications">🔔</button>
+                <div class="user-menu">
+                    <button class="user-btn" id="userMenuBtn" onclick="toggleUserMenu()">
+                        <span class="user-avatar">👤</span>
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown" style="display: none;">
+                        <a href="/settings.html" class="dropdown-item">
+                            <span class="item-icon">⚙️</span>
+                            <span>Settings</span>
+                        </a>
+                        <a href="#" class="dropdown-item" onclick="logout()">
+                            <span class="item-icon">🚪</span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-wrapper">
+            <aside class="sidebar" id="sidebar">
+                <nav class="sidebar-nav">
+                    <a href="/dashboard.html" class="nav-item">
+                        <span class="nav-icon">📁</span>
+                        <span class="nav-text">My Files</span>
+                    </a>
+                    <a href="#" class="nav-item"><span class="nav-icon">🕐</span><span class="nav-text">Recent</span></a>
+                    <a href="#" class="nav-item"><span class="nav-icon">⭐</span><span class="nav-text">Favorites</span></a>
+                    <a href="/shared-with-me.html" class="nav-item">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-text">Shared with me</span>
+                    </a>
+                    <a href="/trash.html" class="nav-item">
+                        <span class="nav-icon">🗑️</span>
+                        <span class="nav-text">Trash</span>
+                    </a>
+                    <a href="/settings.html" class="nav-item active">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="storage-widget">
+                    <div class="storage-info">
+                        <span id="storageUsed">0 GB</span> of <span id="storageTotal">100 GB</span>
+                    </div>
+                    <div class="storage-bar">
+                        <div class="storage-bar-fill" id="storageBarFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="file-area settings-area">
+                <div class="page-header">
+                    <h1 class="page-title">⚙️ Settings</h1>
+                </div>
+
+                <div class="settings-tabs">
+                    <button class="settings-tab active" onclick="showSettingsSection('profile')">Profile</button>
+                    <button class="settings-tab" onclick="showSettingsSection('storage')">Storage</button>
+                    <button class="settings-tab" onclick="showSettingsSection('security')">Security</button>
+                    <button class="settings-tab" onclick="showSettingsSection('sharing')">Sharing</button>
+                </div>
+
+                <div class="settings-section" id="profileSection">
+                    <div class="settings-card">
+                        <h3 class="settings-card-title">👤 PROFILE</h3>
+                        <form id="profileForm" onsubmit="updateProfile(event)">
+                            <div class="form-group">
+                                <label for="profileName">Full Name</label>
+                                <input type="text" id="profileName" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="profileEmail">Email</label>
+                                <input type="email" id="profileEmail" class="form-input" readonly>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="settings-section" id="storageSection" style="display: none;">
+                    <div class="settings-card">
+                        <h3 class="settings-card-title">💾 STORAGE USAGE</h3>
+                        <p>Detailed storage breakdown will appear here.</p>
+                    </div>
+                </div>
+
+                <div class="settings-section" id="securitySection" style="display: none;">
+                    <div class="settings-card">
+                        <h3 class="settings-card-title">🔒 SECURITY</h3>
+                        <button class="btn btn-secondary">Change Password</button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/settings.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if(window.checkAuthentication) checkAuthentication();
+            if(window.loadUserInfo) loadUserInfo();
+            if(window.loadStorageInfo) loadStorageInfo();
+            if(window.loadProfileData) loadProfileData();
+        });
+
+        function showSettingsSection(sectionId) {
+            // Hide all
+            document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+            
+            // Show target
+            const target = document.getElementById(sectionId + 'Section');
+            if(target) target.style.display = 'block';
+            
+            // Set active tab
+            event.currentTarget.classList.add('active');
+        }
+
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

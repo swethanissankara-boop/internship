@@ -1,0 +1,394 @@
+/* ============================================
+   CLOUDSHARE - RESPONSIVE STYLES
+   Additional mobile-specific styles
+   ============================================ */
+
+/* ============================================
+   SMALL TABLETS (768px and below)
+   ============================================ */
+@media screen and (max-width: 768px) {
+    /* Hide elements on mobile */
+    .topbar-center {
+        display: none;
+    }
+    
+    .user-name {
+        display: none;
+    }
+    
+    /* Show mobile menu toggle */
+    .menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: var(--gray-600);
+        cursor: pointer;
+        border-radius: var(--radius-md);
+    }
+    
+    .menu-toggle:hover {
+        background-color: var(--gray-100);
+    }
+    
+    /* Sidebar transforms */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 150;
+        width: 280px;
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    
+    /* Overlay when sidebar is open */
+    .sidebar-overlay {
+        position: fixed;
+        top: var(--topbar-height);
+        left: 0;
+        width: 100%;
+        height: calc(100vh - var(--topbar-height));
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 140;
+        display: none;
+    }
+    
+    .sidebar-overlay.show {
+        display: block;
+    }
+    
+    /* Main content full width */
+    .file-area {
+        margin-left: 0;
+        padding: var(--spacing-md);
+    }
+    
+    /* Landing page adjustments */
+    .hero-title {
+        font-size: 32px;
+    }
+    
+    .hero-subtitle {
+        font-size: var(--font-size-base);
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .hero-buttons .btn {
+        width: 100%;
+    }
+    
+    /* Features grid single column */
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    /* File grid 2 columns */
+    .file-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
+    }
+    
+    .file-card {
+        padding: var(--spacing-sm);
+    }
+    
+    .file-icon {
+        font-size: 36px;
+    }
+    
+    .file-name {
+        font-size: var(--font-size-xs);
+    }
+    
+    /* Action bar stacking */
+    .action-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+    }
+    
+    .action-left {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .action-left .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    .action-right {
+        justify-content: center;
+    }
+    
+    /* Shared cards stack vertically */
+    .shared-card {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--spacing-md);
+    }
+    
+    .shared-card-actions {
+        width: 100%;
+        justify-content: center;
+        margin-top: var(--spacing-md);
+    }
+    
+    /* Trash cards stack */
+    .trash-card {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--spacing-md);
+    }
+    
+    .trash-checkbox {
+        position: absolute;
+        top: var(--spacing-sm);
+        left: var(--spacing-sm);
+    }
+    
+    .trash-actions {
+        width: 100%;
+        justify-content: center;
+        margin-top: var(--spacing-md);
+        flex-wrap: wrap;
+    }
+    
+    /* Settings tabs wrap */
+    .settings-tabs {
+        justify-content: center;
+    }
+    
+    .settings-tab {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: var(--font-size-sm);
+    }
+    
+    /* Modal full screen on mobile */
+    .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+    
+    .modal-content {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+    
+    /* Context menu positioning */
+    .context-menu {
+        position: fixed;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%);
+        max-width: 280px;
+        width: 90%;
+    }
+}
+
+/* ============================================
+   MOBILE PHONES (480px and below)
+   ============================================ */
+@media screen and (max-width: 480px) {
+    /* Topbar compact */
+    .topbar {
+        padding: 0 var(--spacing-sm);
+    }
+    
+    .logo-text {
+        display: none;
+    }
+    
+    .logo-icon {
+        font-size: 24px;
+    }
+    
+    /* File grid single column */
+    .file-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .file-card {
+        display: flex;
+        align-items: center;
+        text-align: left;
+        padding: var(--spacing-sm);
+        gap: var(--spacing-sm);
+    }
+    
+    .file-icon {
+        font-size: 28px;
+        flex-shrink: 0;
+    }
+    
+    .file-name {
+        flex: 1;
+    }
+    
+    /* Public share grid */
+    .public-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Filter tabs scroll */
+    .filter-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: var(--spacing-sm);
+    }
+    
+    .filter-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    /* Buttons smaller */
+    .btn {
+        padding: 8px 12px;
+        font-size: var(--font-size-xs);
+    }
+    
+    .btn-large {
+        padding: 12px 20px;
+        font-size: var(--font-size-base);
+    }
+    
+    /* Auth pages */
+    .auth-container {
+        padding: var(--spacing-sm);
+    }
+    
+    .auth-box {
+        padding: var(--spacing-md);
+    }
+    
+    .auth-title {
+        font-size: var(--font-size-xl);
+    }
+    
+    /* Storage breakdown compact */
+    .breakdown-items {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .storage-breakdown {
+        padding: var(--spacing-md);
+    }
+    
+    /* Selection bar */
+    .selection-bar {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        text-align: center;
+    }
+    
+    .selection-actions {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Breadcrumb */
+    .breadcrumb {
+        font-size: var(--font-size-xs);
+    }
+    
+    /* Page title */
+    .page-title {
+        font-size: var(--font-size-xl);
+    }
+}
+
+/* ============================================
+   LANDSCAPE MOBILE
+   ============================================ */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    .hero-section {
+        min-height: auto;
+        padding: var(--spacing-lg);
+    }
+    
+    .hero-title {
+        font-size: 28px;
+    }
+    
+    .modal-body {
+        max-height: 60vh;
+    }
+}
+
+/* ============================================
+   TOUCH DEVICE OPTIMIZATIONS
+   ============================================ */
+@media (hover: none) {
+    /* Remove hover effects on touch devices */
+    .btn:hover {
+        transform: none;
+    }
+    
+    .file-card:hover {
+        transform: none;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .nav-item:hover {
+        background-color: transparent;
+    }
+    
+    /* Larger touch targets */
+    .nav-item {
+        padding: var(--spacing-md);
+    }
+    
+    .context-item {
+        padding: var(--spacing-md);
+    }
+    
+    .dropdown-item {
+        padding: var(--spacing-md);
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    .sidebar,
+    .topbar,
+    .action-bar,
+    .context-menu,
+    .modal,
+    .selection-bar {
+        display: none !important;
+    }
+    
+    .file-area {
+        margin-left: 0;
+        padding: 0;
+    }
+    
+    .file-grid {
+        display: block;
+    }
+    
+    .file-card {
+        display: block;
+        border: 1px solid #000;
+        margin-bottom: 8px;
+        page-break-inside: avoid;
+    }
+}

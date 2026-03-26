@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Content - CloudShare</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="public-share-page">
+    <div class="public-container">
+        <header class="public-header">
+            <div class="logo">
+                <span class="logo-icon">☁️</span>
+                <span class="logo-text">CLOUDSHARE</span>
+            </div>
+            <span class="header-subtitle">Shared Content</span>
+        </header>
+
+        <div class="password-view" id="passwordView" style="display: none;">
+            <div class="password-box">
+                <div class="password-icon">🔒</div>
+                <h2>Password Required</h2>
+                <p>This folder is protected. Enter password to access.</p>
+                
+                <form id="passwordForm" onsubmit="verifyPassword(event)">
+                    <div class="form-group">
+                        <label for="sharePassword">Password</label>
+                        <div class="password-wrapper">
+                            <input 
+                                type="password" 
+                                id="sharePassword" 
+                                class="form-input"
+                                placeholder="Enter password"
+                                required
+                                oninput="document.getElementById('passwordError').style.display = 'none'"
+                            >
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('sharePassword')">
+                                <span id="sharePassword-icon">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Access
+                    </button>
+                </form>
+                
+                <div class="alert alert-error" id="passwordError" style="display: none;">
+                    Incorrect password. Please try again.
+                </div>
+            </div>
+        </div>
+
+        <div class="content-view" id="contentView" style="display: none;">
+            <div class="share-info-header">
+                <div class="share-info-icon" id="shareInfoIcon">📁</div>
+                <div class="share-info-details">
+                    <h1 class="share-info-name" id="shareInfoName">Project</h1>
+                    <p class="share-info-meta">
+                        Shared by: <span id="shareInfoOwner">User A</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="download-all-section">
+                <button class="btn btn-primary btn-large" onclick="downloadAllAsZip()">
+                    ⬇ Download All as ZIP (<span id="totalSize">128 MB</span>)
+                </button>
+                <p class="share-stats">
+                    <span id="totalFiles">25</span> files • 
+                    Last updated: <span id="lastUpdated">2h ago</span>
+                </p>
+            </div>
+
+            <div class="public-folders-section" id="foldersSection">
+                <h3 class="section-title">📁 Folders (<span id="folderCount">2</span>)</h3>
+                <div class="public-grid" id="foldersGrid">
+                    <div class="public-card folder-card" onclick="openPublicFolder(1)">
+                        <div class="public-card-icon">📁</div>
+                        <div class="public-card-name">documents</div>
+                        <div class="public-card-info">8 items • 45 MB</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="public-files-section" id="filesSection">
+                <h3 class="section-title">📄 Files (<span id="fileCount">5</span>)</h3>
+                <div class="public-file-list" id="filesList">
+                    <div class="public-file-item">
+                        <div class="file-item-icon">📄</div>
+                        <div class="file-item-name">README.md</div>
+                        <div class="file-item-size">2 KB</div>
+                        <button class="btn btn-sm" onclick="downloadPublicFile(1)">⬇</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="share-footer">
+                <p class="share-footer-info">
+                    ℹ️ <span id="downloadsRemaining">20</span> downloads remaining • 
+                    Link expires in <span id="expiresIn">6 days</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="expired-view" id="expiredView" style="display: none;">
+            <div class="expired-box">
+                <div class="expired-icon">⚠️</div>
+                <h2>Link Expired or Invalid</h2>
+                <p>This share link is no longer available.</p>
+                <a href="/index.html" class="btn btn-primary">Go to CloudShare</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const shareToken = urlParams.get('token');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (shareToken) {
+                checkShareLink(shareToken);
+            } else {
+                showExpiredView();
+            }
+        });
+
+        function checkShareLink(token) {
+            // Simulated API check
+            showPasswordView();
+        }
+
+        function showPasswordView() {
+            hideAllViews();
+            document.getElementById('passwordView').style.display = 'flex';
+        }
+
+        function showContentView() {
+            hideAllViews();
+            document.getElementById('contentView').style.display = 'block';
+        }
+
+        function showExpiredView() {
+            hideAllViews();
+            document.getElementById('expiredView').style.display = 'flex';
+        }
+
+        function hideAllViews() {
+            ['passwordView', 'contentView', 'expiredView'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+        }
+
+        function verifyPassword(event) {
+            event.preventDefault();
+            const password = document.getElementById('sharePassword').value;
+            // Simulated verification
+            if (password === "1234") { // Replace with actual API logic
+                showContentView();
+            } else {
+                document.getElementById('passwordError').style.display = 'block';
+            }
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(inputId + '-icon');
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            icon.textContent = isPassword ? '🙈' : '👁️';
+        }
+
+        function downloadAllAsZip() { alert('Preparing ZIP download...'); }
+        function openPublicFolder(id) { console.log('Opening folder:', id); }
+        function downloadPublicFile(id) { alert('Downloading file...'); }
+    </script>
+</body>
+</html>
