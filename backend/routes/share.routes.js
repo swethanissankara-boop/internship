@@ -7,23 +7,31 @@ const router = express.Router();
 const shareController = require('../controllers/shareController');
 const { authenticateToken } = require('../middleware/auth');
 
-// Create share link (requires auth)
-router.post('/link', authenticateToken, shareController.createShareLink);
+// ============================================
+// PUBLIC ROUTES (No authentication)
+// ============================================
 
-// Get share info by token (public - no auth)
-router.get('/link/:token', shareController.getShareInfo);
+// Get share info by token (public)
+router.get('/public/:token', shareController.getShareInfo);
 
 // Download shared file (public)
-router.get('/link/:token/download', shareController.downloadSharedFile);
+router.get('/public/:token/download', shareController.downloadSharedFile);
 
-// Share with user (requires auth)
+// ============================================
+// PROTECTED ROUTES (Authentication required)
+// ============================================
+
+// Create public share link
+router.post('/link', authenticateToken, shareController.createShareLink);
+
+// Share with specific user
 router.post('/user', authenticateToken, shareController.shareWithUser);
+
+// Get my shares (files I shared)
+router.get('/my-shares', authenticateToken, shareController.getMyShares);
 
 // Get files shared with me
 router.get('/shared-with-me', authenticateToken, shareController.getSharedWithMe);
-
-// Get files I shared
-router.get('/my-shares', authenticateToken, shareController.getMyShares);
 
 // Revoke share
 router.delete('/:id', authenticateToken, shareController.revokeShare);
