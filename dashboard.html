@@ -3,8 +3,1108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - CloudShare</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <title>Dashboard - VShare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ============================================
+           VSHARE DASHBOARD STYLES
+           ============================================ */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #8b5cf6;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --sidebar-width: 260px;
+            --topbar-height: 65px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ============================================
+           DASHBOARD CONTAINER
+           ============================================ */
+
+        .dashboard-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ============================================
+           TOP BAR
+           ============================================ */
+
+        .topbar {
+            height: var(--topbar-height);
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray-600);
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .menu-toggle:hover {
+            background: var(--gray-100);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.5rem;
+            text-decoration: none;
+            color: var(--gray-900);
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.3));
+        }
+
+        .logo-text {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .topbar-center {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 24px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 16px 10px 44px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            font-size: 14px;
+            background: var(--gray-50);
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            border: none;
+            background: var(--gray-100);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .icon-btn .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: var(--danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px 6px 6px;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-btn:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-700);
+        }
+
+        .dropdown-arrow {
+            font-size: 10px;
+            color: var(--gray-400);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            min-width: 200px;
+            overflow: hidden;
+            z-index: 1001;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--gray-700);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        /* ============================================
+           MAIN WRAPPER
+           ============================================ */
+
+        .main-wrapper {
+            display: flex;
+            margin-top: var(--topbar-height);
+            min-height: calc(100vh - var(--topbar-height));
+        }
+
+        /* ============================================
+           SIDEBAR
+           ============================================ */
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 24px 16px;
+            position: fixed;
+            top: var(--topbar-height);
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 999;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background: var(--gray-100);
+            color: var(--gray-800);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+        }
+
+        .storage-widget {
+            margin-top: 32px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .storage-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--gray-800);
+            margin-bottom: 12px;
+        }
+
+        .storage-info {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin-bottom: 10px;
+        }
+
+        .storage-bar {
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .storage-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* ============================================
+           FILE AREA
+           ============================================ */
+
+        .file-area {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 24px;
+            min-height: calc(100vh - var(--topbar-height));
+        }
+
+        .breadcrumb-nav {
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .breadcrumb-item {
+            color: var(--gray-500);
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .breadcrumb-item:hover {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--gray-800);
+            font-weight: 600;
+            cursor: default;
+        }
+
+        .breadcrumb-item.active:hover {
+            background: transparent;
+        }
+
+        .breadcrumb-separator {
+            color: var(--gray-400);
+        }
+
+        /* ============================================
+           ACTION BAR
+           ============================================ */
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .action-left {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--gray-700);
+            border: 2px solid var(--gray-200);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .btn-icon {
+            font-size: 16px;
+        }
+
+        .btn-sm {
+            padding: 8px 14px;
+            font-size: 13px;
+        }
+
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: var(--gray-100);
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .view-btn {
+            padding: 8px 14px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-500);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--white);
+            color: var(--gray-800);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .dropdown-wrapper {
+            position: relative;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            min-width: 150px;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 12px 16px;
+            color: var(--gray-700);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-menu a:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        /* ============================================
+           FILE GRID
+           ============================================ */
+
+        .file-container {
+            min-height: 300px;
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .file-card {
+            background: var(--white);
+            border: 2px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .file-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .file-card.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .file-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-800);
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-info {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-list .file-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 20px;
+            text-align: left;
+        }
+
+        .file-list .file-icon {
+            font-size: 32px;
+            margin-bottom: 0;
+        }
+
+        .file-list .file-name {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        /* ============================================
+           EMPTY STATE
+           ============================================ */
+
+        .empty-state, .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+        }
+
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: var(--gray-500);
+            margin-bottom: 24px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           SELECTION BAR
+           ============================================ */
+
+        .selection-bar {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gray-900);
+            color: var(--white);
+            padding: 12px 24px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        .selection-info {
+            font-size: 14px;
+        }
+
+        .selection-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* ============================================
+           STORAGE BREAKDOWN
+           ============================================ */
+
+        .storage-breakdown {
+            margin-top: 32px;
+            padding: 24px;
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .breakdown-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 16px;
+        }
+
+        .storage-bar-large {
+            height: 12px;
+            background: var(--gray-200);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .storage-text {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        /* ============================================
+           CONTEXT MENU
+           ============================================ */
+
+        .context-menu {
+            position: fixed;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            min-width: 200px;
+            padding: 8px;
+            z-index: 2000;
+        }
+
+        .context-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--gray-700);
+            transition: all 0.2s;
+        }
+
+        .context-item:hover {
+            background: var(--gray-50);
+            color: var(--primary);
+        }
+
+        .context-item.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .context-separator {
+            height: 1px;
+            background: var(--gray-200);
+            margin: 8px 0;
+        }
+
+        .context-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* ============================================
+           MODALS
+           ============================================ */
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-dialog {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: 20px;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: var(--gray-100);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--gray-500);
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 20px 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        /* ============================================
+           UPLOAD MODAL SPECIFIC
+           ============================================ */
+
+        .upload-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .upload-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .upload-icon {
+            font-size: 24px;
+        }
+
+        .upload-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .upload-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-800);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .upload-size {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .upload-progress-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .upload-progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .upload-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .upload-percent {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-600);
+            min-width: 40px;
+        }
+
+        /* ============================================
+           SHARE MODAL SPECIFIC
+           ============================================ */
+
+        .share-item-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .share-icon {
+            font-size: 40px;
+        }
+
+        .share-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--gray-800);
+        }
+
+        .share-meta {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .section-header {
+            margin: 20px 0 12px;
+        }
+
+        .section-header h4 {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-box {
+            padding: 12px 16px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 10px;
+            font-size: 13px;
+            color: var(--primary-dark);
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .radio-option, .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--gray-700);
+        }
+
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .option-group .form-input, .option-group .form-select {
+            width: auto;
+            flex: 1;
+        }
+
+        .user-share-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .user-share-input .form-input {
+            flex: 1;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .file-area {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .topbar-center {
+                display: none;
+            }
+
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .action-left, .action-right {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .user-name {
+                display: none;
+            }
+
+            .file-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .selection-bar {
+                flex-direction: column;
+                gap: 12px;
+                padding: 16px;
+            }
+        }
+    </style>
 </head>
 <body class="dashboard-page">
     <div class="dashboard-container">
@@ -13,20 +1113,19 @@
             <div class="topbar-left">
                 <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
                 <div class="logo">
-                    <span class="logo-icon">☁️</span>
-                    <span class="logo-text">CloudShare</span>
+                    <span class="logo-icon">🔷</span>
+                    <span class="logo-text">VSHARE</span>
                 </div>
             </div>
 
             <div class="topbar-center">
                 <div class="search-box">
                     <input type="text" id="searchInput" class="search-input"
-                        placeholder="🔍 Search files..." onkeyup="searchFilesDebounced(this.value)">
+                        placeholder="Search files and folders..." onkeyup="searchFilesDebounced(this.value)">
                 </div>
             </div>
 
             <div class="topbar-right">
-                <button class="icon-btn notification-btn">🔔<span class="badge">3</span></button>
                 <div class="user-menu">
                     <button class="user-btn" onclick="toggleUserMenu()">
                         <span class="user-avatar">👤</span>
@@ -44,7 +1143,24 @@
                 </div>
             </div>
         </header>
-
+<!-- Properties Modal -->
+<div class="modal" id="propertiesModal" style="display: none;">
+    <div class="modal-backdrop" onclick="closePropertiesModal()"></div>
+    <div class="modal-dialog" style="max-width: 450px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">ℹ️ Properties</h3>
+                <button class="modal-close" onclick="closePropertiesModal()">✕</button>
+            </div>
+            <div class="modal-body" id="propertiesContent">
+                <!-- Properties will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePropertiesModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
         <!-- Main Content -->
         <div class="main-wrapper">
             <!-- Sidebar -->
@@ -74,14 +1190,14 @@
                 </nav>
 
                 <div class="storage-widget">
-                    <div class="storage-title">Storage</div>
+                    <div class="storage-title">💾 Storage</div>
                     <div class="storage-info">
                         <span id="storageUsed">0 GB</span> of <span id="storageTotal">100 GB</span>
                     </div>
                     <div class="storage-bar">
                         <div class="storage-bar-fill" id="storageBarFill" style="width: 0%"></div>
                     </div>
-                    <button class="btn btn-sm btn-block" onclick="window.location.href='/settings.html'">
+                    <button class="btn btn-secondary btn-sm btn-block" onclick="window.location.href='/settings.html'">
                         Manage Storage
                     </button>
                 </div>
@@ -91,24 +1207,34 @@
             <main class="file-area">
                 <div class="breadcrumb-nav">
                     <div class="breadcrumb">
-                        <span class="breadcrumb-item" onclick="navigateToRoot()">📁 My Files</span>
-                        <span class="breadcrumb-separator">›</span>
+                        <span class="breadcrumb-item" onclick="navigateToRoot()" style="cursor: pointer;">
+                            📁 My Files
+                        </span>
+                        <span class="breadcrumb-separator" id="breadcrumbSeparator" style="display: none;">›</span>
                         <span class="breadcrumb-item active" id="currentFolder">All Files</span>
                     </div>
                 </div>
 
                 <div class="action-bar">
                     <div class="action-left">
-                        <button class="btn btn-primary" onclick="openFileUpload()">⬆ Upload File</button>
-                        <button class="btn btn-primary" onclick="openFolderUpload()">📁 Upload Folder</button>
-                        <button class="btn" onclick="createNewFolder()">➕ New Folder</button>
+                        <button class="btn btn-primary" onclick="openFileUpload()">
+                            <span class="btn-icon">📤</span> Upload Files
+                        </button>
+                        <button class="btn btn-primary" onclick="openFolderUpload()">
+                            <span class="btn-icon">📂</span> Upload Folder
+                        </button>
+                        <button class="btn btn-secondary" onclick="createNewFolder()">
+                            <span class="btn-icon">➕</span> New Folder
+                        </button>
                         <div class="dropdown-wrapper">
-                            <button class="btn" onclick="toggleSortMenu()">⚙ Sort ▼</button>
+                            <button class="btn btn-secondary" onclick="toggleSortMenu()">
+                                <span class="btn-icon">⚙️</span> Sort
+                            </button>
                             <div class="dropdown-menu" id="sortMenu" style="display: none;">
-                                <a href="#" onclick="sortBy('name')">Name</a>
-                                <a href="#" onclick="sortBy('date')">Date</a>
-                                <a href="#" onclick="sortBy('size')">Size</a>
-                                <a href="#" onclick="sortBy('type')">Type</a>
+                                <a href="#" onclick="sortBy('name')">📝 Name</a>
+                                <a href="#" onclick="sortBy('date')">📅 Date</a>
+                                <a href="#" onclick="sortBy('size')">📊 Size</a>
+                                <a href="#" onclick="sortBy('type')">📁 Type</a>
                             </div>
                         </div>
                     </div>
@@ -170,80 +1296,105 @@
     </div>
 
     <!-- Share Modal -->
-    <div class="modal" id="shareModal" style="display: none;">
-        <div class="modal-backdrop" onclick="closeShareModal()"></div>
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Share "<span id="shareItemName">Item</span>"</h3>
-                    <button class="modal-close" onclick="closeShareModal()">✕</button>
+    <!-- Share Modal -->
+<div class="modal" id="shareModal" style="display: none;">
+    <div class="modal-backdrop" onclick="closeShareModal()"></div>
+    <div class="modal-dialog" style="max-width: 650px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Share "<span id="shareItemName">Item</span>"</h3>
+                <button class="modal-close" onclick="closeShareModal()">✕</button>
+            </div>
+            <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
+                <!-- File/Folder Info -->
+                <div class="share-item-info">
+                    <div class="share-icon" id="shareIcon">📁</div>
+                    <div>
+                        <div class="share-name" id="shareName">Project</div>
+                        <div class="share-meta" id="shareMeta">25 files • 128 MB</div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <div class="share-item-info">
-                        <div class="share-icon" id="shareIcon">📁</div>
-                        <div>
-                            <div class="share-name" id="shareName">Project</div>
-                            <div class="share-meta" id="shareMeta">25 files • 128 MB</div>
-                        </div>
-                    </div>
 
-                    <div class="section-header"><h4>🌐 PUBLIC LINK</h4></div>
-                    <div class="info-box">Anyone with the link can access</div>
+                <!-- PUBLIC LINK SECTION -->
+                <div class="section-header"><h4>🌐 PUBLIC LINK</h4></div>
+                <div class="info-box">Anyone with the link can access</div>
 
-                    <div class="form-group">
-                        <label>Permissions:</label>
-                        <label class="radio-option"><input type="radio" name="permission" value="view"><span>View only</span></label>
-                        <label class="radio-option"><input type="radio" name="permission" value="download"><span>Can download files</span></label>
-                        <label class="radio-option"><input type="radio" name="permission" value="download_folder" checked><span>Can download as ZIP</span></label>
-                        <label class="radio-option"><input type="radio" name="permission" value="full"><span>Full access</span></label>
-                    </div>
+                <!-- Permissions (Optional - keeping for future use) -->
+                <div class="form-group" style="display: none;">
+                    <label>Permissions:</label>
+                    <label class="radio-option"><input type="radio" name="permission" value="view"><span>View only</span></label>
+                    <label class="radio-option"><input type="radio" name="permission" value="download" checked><span>Can download files</span></label>
+                    <label class="radio-option"><input type="radio" name="permission" value="download_folder"><span>Can download as ZIP</span></label>
+                    <label class="radio-option"><input type="radio" name="permission" value="full"><span>Full access</span></label>
+                </div>
 
-                    <div class="section-header"><h4>🔒 Security</h4></div>
-                    <div class="option-group">
-                        <label class="checkbox-option"><input type="checkbox" id="requirePassword" onchange="togglePasswordInput()"><span>Password</span></label>
-                        <input type="password" id="sharePassword" class="form-input" placeholder="Enter password" disabled>
-                    </div>
-                    <div class="option-group">
-                        <label class="checkbox-option"><input type="checkbox" id="setExpiry" checked><span>Expires after</span></label>
-                        <select id="expiryDays" class="form-select">
-                            <option value="1">1 day</option>
-                            <option value="7" selected>7 days</option>
-                            <option value="30">30 days</option>
-                        </select>
-                    </div>
-                    <div class="option-group">
-                        <label class="checkbox-option"><input type="checkbox" id="setDownloadLimit" onchange="toggleDownloadLimit()"><span>Max downloads</span></label>
-                        <input type="number" id="maxDownloads" class="form-input" value="50" disabled>
-                    </div>
+                <!-- SECURITY SECTION -->
+                <div class="section-header"><h4>🔒 Security Options</h4></div>
+                
+                <div class="option-group">
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="requirePassword" onchange="togglePasswordInput()">
+                        <span>🔐 Password Protection</span>
+                    </label>
+                    <input type="password" id="sharePassword" class="form-input" placeholder="Enter password" disabled style="margin-top: 8px;">
+                </div>
+                
+                <div class="option-group">
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="setExpiry" onchange="toggleExpiryDate()">
+                        <span>⏰ Set Expiration</span>
+                    </label>
+                    <input type="number" id="expiryDays" class="form-input" placeholder="Days until expiry" min="1" max="365" disabled style="margin-top: 8px;">
+                </div>
+                
+                <div class="option-group">
+                    <label class="checkbox-option">
+                        <input type="checkbox" id="setDownloadLimit" onchange="toggleDownloadLimit()">
+                        <span>📊 Download Limit</span>
+                    </label>
+                    <input type="number" id="maxDownloads" class="form-input" placeholder="Max downloads" min="1" disabled style="margin-top: 8px;">
+                </div>
 
+                <!-- Generate Link Button -->
+                <button class="btn btn-primary" onclick="generateShareLink()" style="width: 100%; margin-top: 20px; padding: 12px; font-size: 16px;">
+                    🔗 Generate Share Link
+                </button>
+
+                <!-- Container for Generated Link (Added) -->
+                <div id="shareLinkContainer" style="margin-top: 20px;"></div>
+
+                <!-- Container for Existing Shares (Added) -->
+                <div id="existingShares" style="margin-top: 20px;"></div>
+
+                <!-- SHARE WITH PEOPLE SECTION (Optional - for future feature) -->
+                <div style="display: none;">
                     <div class="section-header"><h4>👤 SHARE WITH PEOPLE</h4></div>
                     <div class="user-share-input">
                         <input type="email" id="shareUserEmail" class="form-input" placeholder="Enter email...">
-                        <button class="btn btn-sm" onclick="addUserShare()">+ Add</button>
+                        <button class="btn btn-sm btn-primary" onclick="addUserShare()">+ Add</button>
                     </div>
                     <div class="shared-users-list" id="sharedUsersList"></div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn" onclick="closeShareModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="generateShareLink()">Generate Share Link</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeShareModal()">Close</button>
             </div>
         </div>
     </div>
-
+</div>
     <!-- Upload Modal -->
     <div class="modal" id="uploadModal" style="display: none;">
         <div class="modal-backdrop"></div>
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title">Uploading Files...</h3>
+                    <h3 class="modal-title">📤 Uploading Files...</h3>
                     <button class="modal-close" onclick="closeUploadModal()">✕</button>
                 </div>
                 <div class="modal-body" id="uploadList"></div>
                 <div class="modal-footer">
-                    <button class="btn" onclick="pauseAllUploads()">Pause All</button>
-                    <button class="btn btn-danger" onclick="cancelAllUploads()">Cancel</button>
+                    <button class="btn btn-secondary" onclick="pauseAllUploads()">⏸️ Pause All</button>
+                    <button class="btn btn-danger" onclick="cancelAllUploads()">❌ Cancel</button>
                 </div>
             </div>
         </div>
@@ -253,75 +1404,76 @@
     <input type="file" id="fileInput" multiple style="display: none;" onchange="handleFileSelect(event)">
     <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;" onchange="handleFolderSelect(event)">
 
+    <!-- Scripts -->
     <script src="/js/utils.js"></script>
-<script src="/js/auth.js"></script>
-<script src="/js/dashboard.js"></script>
-<script src="/js/upload.js"></script>
-<script src="/js/share.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/upload.js"></script>
+    <script src="/js/share.js"></script>
 
-<script>
-let searchTimeout;
+    <script>
+        let searchTimeout;
 
-// 🔐 AUTH CHECK + INIT
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('=== Dashboard Loading ===');
-    
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    
-    console.log('Token exists:', !!token);
-    console.log('User exists:', !!userStr);
-    
-    if (!token || !userStr) {
-        console.log('Not authenticated, redirecting to login...');
-        setTimeout(() => {
-            window.location.href = '/login.html';
-        }, 100);
-        return;
-    }
-    
-    try {
-        const user = JSON.parse(userStr);
-        console.log('User data:', user);
-        
-        // 👤 Set user name
-        if (user && user.username) {
-            const userNameEl = document.getElementById('userName');
-            if (userNameEl) {
-                userNameEl.textContent = user.username;
-                console.log('Username set:', user.username);
+        // 🔐 AUTH CHECK + INIT
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== Dashboard Loading ===');
+            
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            console.log('Token exists:', !!token);
+            console.log('User exists:', !!userStr);
+            
+            if (!token || !userStr) {
+                console.log('Not authenticated, redirecting to login...');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 100);
+                return;
             }
-        }
-        
-        // Initialize dashboard
-        if (typeof initializeDashboard === 'function') {
-            console.log('Initializing dashboard...');
-            initializeDashboard();
-        } else {
-            console.error('initializeDashboard function not found!');
-        }
-    } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.clear();
-        window.location.href = '/login.html';
-    }
-});
+            
+            try {
+                const user = JSON.parse(userStr);
+                console.log('User data:', user);
+                
+                // 👤 Set user name
+                if (user && user.username) {
+                    const userNameEl = document.getElementById('userName');
+                    if (userNameEl) {
+                        userNameEl.textContent = user.username;
+                        console.log('Username set:', user.username);
+                    }
+                }
+                
+                // Initialize dashboard
+                if (typeof initializeDashboard === 'function') {
+                    console.log('Initializing dashboard...');
+                    initializeDashboard();
+                } else {
+                    console.error('initializeDashboard function not found!');
+                }
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                localStorage.clear();
+                window.location.href = '/login.html';
+            }
+        });
 
-// 🔍 SEARCH WITH DELAY
-function searchFilesDebounced(value){
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        if (typeof searchFiles === 'function') {
-            searchFiles(value);
+        // 🔍 SEARCH WITH DELAY
+        function searchFilesDebounced(value) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (typeof searchFiles === 'function') {
+                    searchFiles(value);
+                }
+            }, 300);
         }
-    }, 300);
-}
 
-// 🖱️ CLOSE CONTEXT MENU
-document.addEventListener('click', function() {
-    const menu = document.getElementById('contextMenu');
-    if(menu) menu.style.display = 'none';
-});
-</script>
+        // 🖱️ CLOSE CONTEXT MENU
+        document.addEventListener('click', function() {
+            const menu = document.getElementById('contextMenu');
+            if (menu) menu.style.display = 'none';
+        });
+    </script>
 </body>
 </html>
