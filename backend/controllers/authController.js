@@ -5,12 +5,13 @@
 const bcrypt = require('bcrypt');
 const { query, queryOne } = require('../config/db');
 const { generateToken } = require('../middleware/auth');
-const { storageConfig } = require('../config/storage');
 
 // Register new user
 async function register(req, res) {
     try {
         const { name, email, password } = req.body;
+        
+        console.log('Registration attempt:', { name, email }); // Debug log
         
         // Validation
         if (!name || !email || !password) {
@@ -47,10 +48,12 @@ async function register(req, res) {
         const result = await query(
             `INSERT INTO users (username, email, password, storage_quota, storage_used) 
              VALUES (?, ?, ?, ?, ?)`,
-            [name, email, hashedPassword, storageConfig.defaultQuota, 0]
+            [name, email, hashedPassword, 10737418240, 0]
         );
         
         const userId = result.insertId;
+        
+        console.log('User created with ID:', userId); // Debug log
         
         // Generate token (Payload uses 'id')
         const token = generateToken({ id: userId, email });
@@ -60,7 +63,7 @@ async function register(req, res) {
             id: userId,
             username: name,
             email,
-            storage_quota: storageConfig.defaultQuota,
+            storage_quota: 10737418240,
             storage_used: 0,
             created_at: new Date()
         };
@@ -74,9 +77,11 @@ async function register(req, res) {
         
     } catch (error) {
         console.error('Register error:', error);
+        console.error('Error stack:', error.stack); // More detailed error
         res.status(500).json({
             success: false,
-            message: 'Registration failed'
+            message: 'Registration failed',
+            error: error.message // Send error details in development
         });
     }
 }
@@ -85,6 +90,8 @@ async function register(req, res) {
 async function login(req, res) {
     try {
         const { email, password } = req.body;
+        
+        console.log('Login attempt:', email); // Debug log
         
         // Validation
         if (!email || !password) {
@@ -145,9 +152,11 @@ async function login(req, res) {
         
     } catch (error) {
         console.error('Login error:', error);
+        console.error('Error stack:', error.stack);
         res.status(500).json({
             success: false,
-            message: 'Login failed'
+            message: 'Login failed',
+            error: error.message
         });
     }
 }
@@ -163,7 +172,6 @@ async function logout(req, res) {
 // Get current user info
 async function getCurrentUser(req, res) {
     try {
-        // FIXED: Changed from req.user.userId to req.user.id to match the token payload
         const userId = req.user.id; 
         
         if (!userId) {
@@ -192,9 +200,11 @@ async function getCurrentUser(req, res) {
         
     } catch (error) {
         console.error('Get user error:', error);
+        console.error('Error stack:', error.stack);
         res.status(500).json({
             success: false,
-            message: 'Failed to get user info'
+            message: 'Failed to get user info',
+            error: error.message
         });
     }
 }
