@@ -6,80 +6,55 @@ const path = require('path');
 const fs = require('fs');
 
 // Storage paths
+const STORAGE_BASE = path.join(__dirname, '..', '..', 'storage');
+const UPLOADS_PATH = path.join(__dirname, '..', 'uploads');
+
 const STORAGE_PATHS = {
-    base: path.join(__dirname, '../../storage'),
-    node1: path.join(__dirname, '../../storage/node1'),
-    node2: path.join(__dirname, '../../storage/node2'),
-    node3: path.join(__dirname, '../../storage/node3'),
-    backup1: path.join(__dirname, '../../storage/backup1'),
-    backup2: path.join(__dirname, '../../storage/backup2'),
-    temp: path.join(__dirname, '../../storage/temp')
+    base: STORAGE_BASE,
+    uploads: UPLOADS_PATH,
+    temp: path.join(STORAGE_BASE, 'temp'),
+    node1: path.join(STORAGE_BASE, 'node1'),
+    node2: path.join(STORAGE_BASE, 'node2'),
+    node3: path.join(STORAGE_BASE, 'node3'),
+    backup1: path.join(STORAGE_BASE, 'backup1'),
+    backup2: path.join(STORAGE_BASE, 'backup2')
 };
 
-// Ensure storage directories exist
+// Initialize storage directories
 function initializeStorage() {
-    console.log('📁 Initializing storage directories...');
-    
-    Object.entries(STORAGE_PATHS).forEach(([name, dirPath]) => {
-        if (!fs.existsSync(dirPath)) {
-            fs.mkdirSync(dirPath, { recursive: true });
-            console.log(`   ✓ Created: ${name}`);
+    return new Promise((resolve, reject) => {
+        try {
+            Object.values(STORAGE_PATHS).forEach(dir => {
+                if (!fs.existsSync(dir)) {
+                    fs.mkdirSync(dir, { recursive: true });
+                    console.log(`📁 Created: ${dir}`);
+                }
+            });
+            resolve(true);
+        } catch (error) {
+            reject(error);
         }
     });
-    
-    console.log('✅ Storage directories initialized\n');
 }
 
-// Initialize on module load
-initializeStorage();
-
-// Storage configuration
-const storageConfig = {
-    paths: STORAGE_PATHS,
-    nodes: ['node1', 'node2', 'node3'],
-    backups: ['backup1', 'backup2'],
-    defaultQuota: parseInt(process.env.DEFAULT_USER_QUOTA) || 107374182400, // 100 GB
-    maxFileSize: parseInt(process.env.MAX_FILE_SIZE) || 5368709120 // 5 GB
-};
-
-// Select storage node (round-robin based on user ID)
-function selectStorageNode(userId) {
-    const nodeIndex = userId % storageConfig.nodes.length;
-    return storageConfig.nodes[nodeIndex];
+// Get storage path by type
+function getStoragePath(type = 'uploads') {
+    return STORAGE_PATHS[type] || STORAGE_PATHS.uploads;
 }
 
-// Get user storage path
-function getUserStoragePath(userId, node) {
-    const nodePath = STORAGE_PATHS[node];
-    const userPath = path.join(nodePath, `user_${userId}`);
-    
-    // Create if doesn't exist
-    if (!fs.existsSync(userPath)) {
-        fs.mkdirSync(userPath, { recursive: true });
-    }
-    
-    return userPath;
-}
-
-// Get backup paths for user
-function getUserBackupPaths(userId) {
-    return storageConfig.backups.map(backup => {
-        const backupPath = STORAGE_PATHS[backup];
-        const userBackupPath = path.join(backupPath, `user_${userId}`);
-        
-        // Create if doesn't exist
-        if (!fs.existsSync(userBackupPath)) {
-            fs.mkdirSync(userBackupPath, { recursive: true });
-        }
-        
-        return userBackupPath;
-    });
+// Check disk space (basic implementation)
+function checkDiskSpace() {
+    // This would need a proper implementation for production
+    return {
+        total: 100 * 1024 * 1024 * 1024, // 100 GB
+        free: 50 * 1024 * 1024 * 1024,   // 50 GB
+        used: 50 * 1024 * 1024 * 1024    // 50 GB
+    };
 }
 
 module.exports = {
-    storageConfig,
     STORAGE_PATHS,
-    selectStorageNode,
-    getUserStoragePath,
-    getUserBackupPaths
+    initializeStorage,
+    getStoragePath,
+    checkDiskSpace
 };
