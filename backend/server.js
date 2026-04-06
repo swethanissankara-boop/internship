@@ -1,5 +1,5 @@
 /* ============================================
-   CLOUDSHARE - MAIN SERVER (FIXED)
+   CLOUDSHARE - MAIN SERVER (UPDATED WITH FAVORITES & SETTINGS)
    ============================================ */
 
 require('dotenv').config();
@@ -37,6 +37,9 @@ app.use(express.static(frontendPath));
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve storage files (for profile pictures, etc.)
+app.use('/storage', express.static(path.join(__dirname, '../storage')));
+
 // Log all requests
 app.use((req, res, next) => {
     console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
@@ -51,11 +54,15 @@ const authRoutes = require('./routes/auth.routes');
 const fileRoutes = require('./routes/file.routes');
 const folderRoutes = require('./routes/folder.routes');
 const shareRoutes = require('./routes/share.routes');
+const favoriteRoutes = require('./routes/favorite.routes');
+const settingsRoutes = require('./routes/settings.routes'); // ⚙️ NEW
 
 app.use('/api/auth', authRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/share', shareRoutes);
+app.use('/api/favorites', favoriteRoutes);
+app.use('/api/settings', settingsRoutes); // ⚙️ NEW
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -63,7 +70,11 @@ app.get('/api/health', (req, res) => {
         status: 'ok',
         message: 'CloudShare server is running',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        memory: {
+            used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+            total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB'
+        }
     });
 });
 
@@ -107,6 +118,10 @@ app.get('/trash', (req, res) => {
 
 app.get('/shared-with-me', (req, res) => {
     res.sendFile(path.join(frontendPath, 'shared-with-me.html'));
+});
+
+app.get('/favorites', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'favorites.html'));
 });
 
 // ============================================
@@ -164,7 +179,8 @@ function initializeStorageDirectories() {
         path.join(__dirname, '..', 'storage', 'node2'),
         path.join(__dirname, '..', 'storage', 'node3'),
         path.join(__dirname, '..', 'storage', 'backup1'),
-        path.join(__dirname, '..', 'storage', 'backup2')
+        path.join(__dirname, '..', 'storage', 'backup2'),
+        path.join(__dirname, '..', 'storage', 'profile-pictures') // ⚙️ NEW
     ];
 
     directories.forEach(dir => {
@@ -173,6 +189,36 @@ function initializeStorageDirectories() {
             console.log(`📁 Created directory: ${dir}`);
         }
     });
+}
+
+// ============================================
+// SCHEDULE AUTO-CLEANUP (TRASH)
+// ============================================
+
+function scheduleAutoCleanup() {
+    const { query } = require('./config/db');
+    
+    // Run cleanup every 24 hours
+    setInterval(async () => {
+        try {
+            console.log('🧹 Running automatic trash cleanup...');
+            await query('CALL AutoDeleteOldTrash()');
+            console.log('✅ Automatic trash cleanup completed');
+        } catch (error) {
+            console.error('❌ Automatic trash cleanup failed:', error);
+        }
+    }, 24 * 60 * 60 * 1000); // 24 hours
+    
+    // Also run once on startup (after 1 minute)
+    setTimeout(async () => {
+        try {
+            console.log('🧹 Running initial trash cleanup...');
+            await query('CALL AutoDeleteOldTrash()');
+            console.log('✅ Initial trash cleanup completed');
+        } catch (error) {
+            console.error('❌ Initial trash cleanup failed:', error);
+        }
+    }, 60 * 1000); // 1 minute
 }
 
 // ============================================
@@ -206,6 +252,9 @@ app.listen(PORT, HOST, () => {
     console.log(`   🔐 Login:        http://${localIP}:${PORT}/login.html`);
     console.log(`   📝 Register:     http://${localIP}:${PORT}/register.html`);
     console.log(`   📊 Dashboard:    http://${localIP}:${PORT}/dashboard.html`);
+    console.log(`   ⭐ Favorites:    http://${localIP}:${PORT}/favorites.html`);
+    console.log(`   🗑️ Trash:        http://${localIP}:${PORT}/trash.html`);
+    console.log(`   ⚙️  Settings:     http://${localIP}:${PORT}/settings.html`);
     console.log(`   🔗 Share Test:   http://${localIP}:${PORT}/share/test123`);
     console.log('');
     console.log('🔌 API Endpoints:');
@@ -215,12 +264,21 @@ app.listen(PORT, HOST, () => {
     console.log(`   📁 Files:        http://${localIP}:${PORT}/api/files/*`);
     console.log(`   📂 Folders:      http://${localIP}:${PORT}/api/folders/*`);
     console.log(`   🔗 Share:        http://${localIP}:${PORT}/api/share/*`);
+    console.log(`   ⭐ Favorites:    http://${localIP}:${PORT}/api/favorites/*`);
+    console.log(`   ⚙️  Settings:     http://${localIP}:${PORT}/api/settings/*`); // ⚙️ NEW
     console.log('');
     console.log('📁 Files served from:', frontendPath);
     console.log('💾 Uploads path:', path.join(__dirname, 'uploads'));
+    console.log('🖼️  Storage path:', path.join(__dirname, '../storage'));
+    console.log('');
+    console.log('🔄 Scheduled Tasks:');
+    console.log('   🧹 Auto-cleanup: Every 24 hours');
     console.log('');
     console.log('🔥 Server is ready! Press Ctrl+C to stop');
     console.log('');
+    
+    // Schedule automatic cleanup
+    scheduleAutoCleanup();
 });
 
 // ============================================
