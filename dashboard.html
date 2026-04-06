@@ -86,6 +86,27 @@
             align-items: center;
             gap: 16px;
         }
+        /* ============================================
+   NAVIGATION BADGE
+   ============================================ */
+
+.nav-badge {
+    margin-left: auto;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
+}
+
+.nav-item.active .nav-badge {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+} 
 
         .menu-toggle {
             display: none;
@@ -233,6 +254,24 @@
             justify-content: center;
             font-size: 18px;
         }
+        /* Shared Cards Styles */
+.shared-card {
+    transition: all 0.2s ease;
+}
+
+.shared-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
+}
+
+.shared-card .btn-sm {
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+}
+
+.file-grid h3 {
+    grid-column: 1 / -1;
+}
 
         .user-name {
             font-weight: 600;
@@ -1164,44 +1203,58 @@
         <!-- Main Content -->
         <div class="main-wrapper">
             <!-- Sidebar -->
-            <aside class="sidebar" id="sidebar">
-                <nav class="sidebar-nav">
-                    <a href="/dashboard.html" class="nav-item active">
-                        <span class="nav-icon">📁</span><span class="nav-text">My Files</span>
-                    </a>
-                    <a href="#" class="nav-item" onclick="showRecent(event)">
-                        <span class="nav-icon">🕐</span><span class="nav-text">Recent</span>
-                    </a>
-                    <a href="#" class="nav-item" onclick="showFavorites(event)">
-                        <span class="nav-icon">⭐</span><span class="nav-text">Favorites</span>
-                    </a>
-                    <a href="#" class="nav-item">
-                        <span class="nav-icon">🔗</span><span class="nav-text">Shared by me</span>
-                    </a>
-                    <a href="/shared-with-me.html" class="nav-item">
-                        <span class="nav-icon">👥</span><span class="nav-text">Shared with me</span>
-                    </a>
-                    <a href="/trash.html" class="nav-item">
-                        <span class="nav-icon">🗑️</span><span class="nav-text">Trash</span>
-                    </a>
-                    <a href="/settings.html" class="nav-item">
-                        <span class="nav-icon">⚙️</span><span class="nav-text">Settings</span>
-                    </a>
-                </nav>
+            <!-- Sidebar -->
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <nav class="sidebar-nav">
+        <a href="/dashboard.html" class="nav-item active" id="navMyFiles">
+            <span class="nav-icon">📁</span><span class="nav-text">My Files</span>
+        </a>
+        <a href="#" class="nav-item" id="navRecent" onclick="showRecent(event)">
+            <span class="nav-icon">🕐</span><span class="nav-text">Recent</span>
+        </a>
+        <a href="#" class="nav-item" id="navFavorites" onclick="showFavorites(event)">
+            <span class="nav-icon">⭐</span>
+            <span class="nav-text">Favorites</span>
+            <span class="nav-badge" id="favoriteCount" style="
+                margin-left: auto;
+                background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                color: white;
+                font-size: 11px;
+                font-weight: 700;
+                padding: 2px 8px;
+                border-radius: 10px;
+                min-width: 20px;
+                text-align: center;
+            ">0</span>
+        </a>
+        <a href="#" class="nav-item" id="navSharedByMe" onclick="showSharedByMe(event)">
+            <span class="nav-icon">🔗</span><span class="nav-text">Shared by me</span>
+        </a>
+        <a href="#" class="nav-item" id="navSharedWithMe" onclick="showSharedWithMe(event)">
+    <span class="nav-icon">👥</span><span class="nav-text">Shared with me</span>
+</a>
+        <a href="/trash.html" class="nav-item">
+            <span class="nav-icon">🗑️</span><span class="nav-text">Trash</span>
+        </a>
+        <a href="/settings.html" class="nav-item">
+            <span class="nav-icon">⚙️</span><span class="nav-text">Settings</span>
+        </a>
+    </nav>
 
-                <div class="storage-widget">
-                    <div class="storage-title">💾 Storage</div>
-                    <div class="storage-info">
-                        <span id="storageUsed">0 GB</span> of <span id="storageTotal">100 GB</span>
-                    </div>
-                    <div class="storage-bar">
-                        <div class="storage-bar-fill" id="storageBarFill" style="width: 0%"></div>
-                    </div>
-                    <button class="btn btn-secondary btn-sm btn-block" onclick="window.location.href='/settings.html'">
-                        Manage Storage
-                    </button>
-                </div>
-            </aside>
+    <div class="storage-widget">
+        <div class="storage-title">💾 Storage</div>
+        <div class="storage-info">
+            <span id="storageUsed">0 GB</span> of <span id="storageTotal">100 GB</span>
+        </div>
+        <div class="storage-bar">
+            <div class="storage-bar-fill" id="storageBarFill" style="width: 0%"></div>
+        </div>
+        <button class="btn btn-secondary btn-sm btn-block" onclick="window.location.href='/settings.html'">
+            Manage Storage
+        </button>
+    </div>
+</aside>
 
             <!-- File Area -->
             <main class="file-area">
@@ -1280,12 +1333,7 @@
 
     <!-- Context Menu -->
     <div class="context-menu" id="contextMenu" style="display: none;">
-        <div class="context-item" onclick="contextAction('open')"><span class="context-icon">📂</span><span>Open</span></div>
-        <div class="context-item" onclick="contextAction('preview')"><span class="context-icon">👁️</span><span>Preview</span></div>
-        <div class="context-separator"></div>
-        <div class="context-item" onclick="contextAction('download')"><span class="context-icon">📥</span><span>Download</span></div>
-        <div class="context-item" onclick="contextAction('share')"><span class="context-icon">🔗</span><span>Share</span></div>
-        <div class="context-item" onclick="contextAction('copy')"><span class="context-icon">📋</span><span>Copy</span></div>
+         <div class="context-item" onclick="contextAction('share')"><span class="context-icon">🔗</span><span>Share</span></div>
         <div class="context-item" onclick="contextAction('move')"><span class="context-icon">✂️</span><span>Move to...</span></div>
         <div class="context-separator"></div>
         <div class="context-item" onclick="contextAction('favorite')"><span class="context-icon">⭐</span><span>Favorites</span></div>
@@ -1296,7 +1344,7 @@
     </div>
 
     <!-- Share Modal -->
-    <!-- Share Modal -->
+<!-- Share Modal -->
 <div class="modal" id="shareModal" style="display: none;">
     <div class="modal-backdrop" onclick="closeShareModal()"></div>
     <div class="modal-dialog" style="max-width: 650px;">
@@ -1315,65 +1363,92 @@
                     </div>
                 </div>
 
-                <!-- PUBLIC LINK SECTION -->
-                <div class="section-header"><h4>🌐 PUBLIC LINK</h4></div>
-                <div class="info-box">Anyone with the link can access</div>
-
-                <!-- Permissions (Optional - keeping for future use) -->
-                <div class="form-group" style="display: none;">
-                    <label>Permissions:</label>
-                    <label class="radio-option"><input type="radio" name="permission" value="view"><span>View only</span></label>
-                    <label class="radio-option"><input type="radio" name="permission" value="download" checked><span>Can download files</span></label>
-                    <label class="radio-option"><input type="radio" name="permission" value="download_folder"><span>Can download as ZIP</span></label>
-                    <label class="radio-option"><input type="radio" name="permission" value="full"><span>Full access</span></label>
+                <!-- TABS -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">
+                    <button id="tabPublicLink" onclick="switchShareTab('public')" 
+                            style="padding: 8px 16px; border: none; background: #6366f1; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        🌐 Public Link
+                    </button>
+                    <button id="tabShareUser" onclick="switchShareTab('user')" 
+                            style="padding: 8px 16px; border: none; background: #f3f4f6; color: #374151; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        👤 Share with User
+                    </button>
                 </div>
 
-                <!-- SECURITY SECTION -->
-                <div class="section-header"><h4>🔒 Security Options</h4></div>
-                
-                <div class="option-group">
-                    <label class="checkbox-option">
-                        <input type="checkbox" id="requirePassword" onchange="togglePasswordInput()">
-                        <span>🔐 Password Protection</span>
-                    </label>
-                    <input type="password" id="sharePassword" class="form-input" placeholder="Enter password" disabled style="margin-top: 8px;">
-                </div>
-                
-                <div class="option-group">
-                    <label class="checkbox-option">
-                        <input type="checkbox" id="setExpiry" onchange="toggleExpiryDate()">
-                        <span>⏰ Set Expiration</span>
-                    </label>
-                    <input type="number" id="expiryDays" class="form-input" placeholder="Days until expiry" min="1" max="365" disabled style="margin-top: 8px;">
-                </div>
-                
-                <div class="option-group">
-                    <label class="checkbox-option">
-                        <input type="checkbox" id="setDownloadLimit" onchange="toggleDownloadLimit()">
-                        <span>📊 Download Limit</span>
-                    </label>
-                    <input type="number" id="maxDownloads" class="form-input" placeholder="Max downloads" min="1" disabled style="margin-top: 8px;">
-                </div>
+                <!-- PUBLIC LINK TAB -->
+                <div id="publicLinkTab">
+                    <div class="section-header"><h4>🌐 PUBLIC LINK</h4></div>
+                    <div class="info-box">Anyone with the link can access</div>
 
-                <!-- Generate Link Button -->
-                <button class="btn btn-primary" onclick="generateShareLink()" style="width: 100%; margin-top: 20px; padding: 12px; font-size: 16px;">
-                    🔗 Generate Share Link
-                </button>
-
-                <!-- Container for Generated Link (Added) -->
-                <div id="shareLinkContainer" style="margin-top: 20px;"></div>
-
-                <!-- Container for Existing Shares (Added) -->
-                <div id="existingShares" style="margin-top: 20px;"></div>
-
-                <!-- SHARE WITH PEOPLE SECTION (Optional - for future feature) -->
-                <div style="display: none;">
-                    <div class="section-header"><h4>👤 SHARE WITH PEOPLE</h4></div>
-                    <div class="user-share-input">
-                        <input type="email" id="shareUserEmail" class="form-input" placeholder="Enter email...">
-                        <button class="btn btn-sm btn-primary" onclick="addUserShare()">+ Add</button>
+                    <!-- SECURITY SECTION -->
+                    <div class="section-header"><h4>🔒 Security Options</h4></div>
+                    
+                    <div class="option-group">
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="requirePassword" onchange="togglePasswordInput()">
+                            <span>🔐 Password Protection</span>
+                        </label>
+                        <input type="password" id="sharePassword" class="form-input" placeholder="Enter password" disabled style="margin-top: 8px; display: none;">
                     </div>
-                    <div class="shared-users-list" id="sharedUsersList"></div>
+                    
+                    <div class="option-group">
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="setExpiry" onchange="toggleExpiryDate()">
+                            <span>⏰ Set Expiration</span>
+                        </label>
+                        <input type="number" id="expiryDays" class="form-input" placeholder="Days until expiry" min="1" max="365" disabled style="margin-top: 8px; display: none;">
+                    </div>
+                    
+                    <!-- Download Limit (for files only) -->
+                    <div class="option-group" id="downloadLimitGroup">
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="setDownloadLimit" onchange="toggleDownloadLimit()">
+                            <span>📊 Download Limit</span>
+                        </label>
+                        <input type="number" id="maxDownloads" class="form-input" placeholder="Max downloads" min="1" disabled style="margin-top: 8px; display: none;">
+                    </div>
+
+                    <!-- View Limit (for folders only) -->
+                    <div class="option-group" id="viewLimitGroup" style="display: none;">
+                        
+                        <input type="number" id="maxViews" class="form-input" placeholder="Max views" min="1" disabled style="margin-top: 8px; display: none;">
+                    </div>
+
+                    <!-- Generate Link Button -->
+                    <button class="btn btn-primary" onclick="generateShareLink()" style="width: 100%; margin-top: 20px; padding: 12px; font-size: 16px;">
+                        🔗 Generate Share Link
+                    </button>
+
+                    <!-- Container for Generated Link -->
+                    <div id="shareLinkContainer" style="margin-top: 20px;"></div>
+
+                    <!-- Container for Existing Shares -->
+                    <div id="existingShares" style="margin-top: 20px;"></div>
+                </div>
+
+                <!-- SHARE WITH USER TAB -->
+                <div id="shareUserTab" style="display: none;">
+                    <div class="section-header"><h4>👤 SHARE WITH SPECIFIC USER</h4></div>
+                    <div class="info-box">Enter the email of the user you want to share with</div>
+
+                    <div class="form-group">
+                        <label for="shareUserEmail">User Email</label>
+                        <input type="email" id="shareUserEmail" class="form-input" placeholder="Enter email address...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shareUserPermission">Permission</label>
+                        <select id="shareUserPermission" class="form-input" style="cursor: pointer;">
+                            <option value="download">📥 Download - Can download files</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="shareWithUser()" style="width: 100%; margin-top: 20px; padding: 12px; font-size: 16px;">
+                        👤 Share with User
+                    </button>
+
+                    <!-- Shared Users List -->
+                    <div id="sharedUsersList" style="margin-top: 20px;"></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1382,98 +1457,211 @@
         </div>
     </div>
 </div>
-    <!-- Upload Modal -->
-    <div class="modal" id="uploadModal" style="display: none;">
-        <div class="modal-backdrop"></div>
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">📤 Uploading Files...</h3>
-                    <button class="modal-close" onclick="closeUploadModal()">✕</button>
-                </div>
-                <div class="modal-body" id="uploadList"></div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="pauseAllUploads()">⏸️ Pause All</button>
-                    <button class="btn btn-danger" onclick="cancelAllUploads()">❌ Cancel</button>
-                </div>
+
+<!-- Upload Modal -->
+<div class="modal" id="uploadModal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">📤 Uploading Files...</h3>
+                <button class="modal-close" onclick="closeUploadModal()">✕</button>
+            </div>
+            <div class="modal-body" id="uploadList"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="pauseAllUploads()">⏸️ Pause All</button>
+                <button class="btn btn-danger" onclick="cancelAllUploads()">❌ Cancel</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Hidden File Inputs -->
-    <input type="file" id="fileInput" multiple style="display: none;" onchange="handleFileSelect(event)">
-    <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;" onchange="handleFolderSelect(event)">
+<!-- Hidden File Inputs -->
+<input type="file" id="fileInput" multiple style="display: none;" onchange="handleFileSelect(event)">
+<input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;" onchange="handleFolderSelect(event)">
 
-    <!-- Scripts -->
-    <script src="/js/utils.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/dashboard.js"></script>
-    <script src="/js/upload.js"></script>
-    <script src="/js/share.js"></script>
+<!-- Scripts -->
+<script src="/js/utils.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/upload.js"></script>
+<script src="/js/share.js"></script>
 
-    <script>
-        let searchTimeout;
+<script>
+    let searchTimeout;
 
-        // 🔐 AUTH CHECK + INIT
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('=== Dashboard Loading ===');
-            
-            const token = localStorage.getItem('token');
-            const userStr = localStorage.getItem('user');
-            
-            console.log('Token exists:', !!token);
-            console.log('User exists:', !!userStr);
-            
-            if (!token || !userStr) {
-                console.log('Not authenticated, redirecting to login...');
-                setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 100);
-                return;
-            }
-            
-            try {
-                const user = JSON.parse(userStr);
-                console.log('User data:', user);
-                
-                // 👤 Set user name
-                if (user && user.username) {
-                    const userNameEl = document.getElementById('userName');
-                    if (userNameEl) {
-                        userNameEl.textContent = user.username;
-                        console.log('Username set:', user.username);
-                    }
-                }
-                
-                // Initialize dashboard
-                if (typeof initializeDashboard === 'function') {
-                    console.log('Initializing dashboard...');
-                    initializeDashboard();
-                } else {
-                    console.error('initializeDashboard function not found!');
-                }
-            } catch (error) {
-                console.error('Error parsing user data:', error);
-                localStorage.clear();
+    // 🔐 AUTH CHECK + INIT
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('=== Dashboard Loading ===');
+        
+        const token = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        
+        console.log('Token exists:', !!token);
+        console.log('User exists:', !!userStr);
+        
+        if (!token || !userStr) {
+            console.log('Not authenticated, redirecting to login...');
+            setTimeout(() => {
                 window.location.href = '/login.html';
-            }
-        });
-
-        // 🔍 SEARCH WITH DELAY
-        function searchFilesDebounced(value) {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                if (typeof searchFiles === 'function') {
-                    searchFiles(value);
-                }
-            }, 300);
+            }, 100);
+            return;
         }
+        
+        try {
+            const user = JSON.parse(userStr);
+            console.log('User data:', user);
+            
+            // 👤 Set user name
+            if (user && user.username) {
+                const userNameEl = document.getElementById('userName');
+                if (userNameEl) {
+                    userNameEl.textContent = user.username;
+                    console.log('Username set:', user.username);
+                }
+            }
+            
+            // Initialize dashboard
+            if (typeof initializeDashboard === 'function') {
+                console.log('Initializing dashboard...');
+                initializeDashboard();
+            } else {
+                console.error('initializeDashboard function not found!');
+            }
+        } catch (error) {
+            console.error('Error parsing user data:', error);
+            localStorage.clear();
+            window.location.href = '/login.html';
+        }
+    });
 
-        // 🖱️ CLOSE CONTEXT MENU
-        document.addEventListener('click', function() {
-            const menu = document.getElementById('contextMenu');
-            if (menu) menu.style.display = 'none';
-        });
-    </script>
+    // 🔍 SEARCH WITH DELAY
+    function searchFilesDebounced(value) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            if (typeof searchFiles === 'function') {
+                searchFiles(value);
+            }
+        }, 300);
+    }
+
+    // 🖱️ CLOSE CONTEXT MENU
+    document.addEventListener('click', function() {
+        const menu = document.getElementById('contextMenu');
+        if (menu) menu.style.display = 'none';
+    });
+
+    // 📂 OPEN SHARE MODAL - Enhanced to support files and folders
+    function openShareModal(item, type) {
+        console.log('🔗 Opening share modal for:', type, item);
+        
+        // Store current share target globally
+        window.currentShareTarget = { id: item.id, type: type };
+        
+        // Update modal title and info
+        const itemName = type === 'folder' ? item.name : item.original_name;
+        const icon = type === 'folder' ? '📁' : getFileIcon(item.mime_type || '');
+        
+        document.getElementById('shareItemName').textContent = itemName;
+        document.getElementById('shareIcon').textContent = icon;
+        document.getElementById('shareName').textContent = itemName;
+        
+        // Update metadata
+        let metaText = '';
+        if (type === 'folder') {
+            metaText = `${item.file_count || 0} files`;
+            if (item.subfolder_count) {
+                metaText += ` • ${item.subfolder_count} folders`;
+            }
+        } else {
+            metaText = formatFileSize(item.size);
+        }
+        document.getElementById('shareMeta').textContent = metaText;
+        
+        // Show/hide appropriate limit options
+        const downloadLimitGroup = document.getElementById('downloadLimitGroup');
+        const viewLimitGroup = document.getElementById('viewLimitGroup');
+        
+        if (type === 'file') {
+            if (downloadLimitGroup) downloadLimitGroup.style.display = 'block';
+            if (viewLimitGroup) viewLimitGroup.style.display = 'none';
+        } else if (type === 'folder') {
+            if (downloadLimitGroup) downloadLimitGroup.style.display = 'none';
+            if (viewLimitGroup) viewLimitGroup.style.display = 'block';
+        }
+        
+        // Reset form
+        document.getElementById('requirePassword').checked = false;
+        document.getElementById('sharePassword').value = '';
+        document.getElementById('sharePassword').disabled = true;
+        document.getElementById('sharePassword').style.display = 'none';
+        
+        document.getElementById('setExpiry').checked = false;
+        document.getElementById('expiryDays').value = '';
+        document.getElementById('expiryDays').disabled = true;
+        document.getElementById('expiryDays').style.display = 'none';
+        
+        document.getElementById('setDownloadLimit').checked = false;
+        document.getElementById('maxDownloads').value = '';
+        document.getElementById('maxDownloads').disabled = true;
+        document.getElementById('maxDownloads').style.display = 'none';
+        
+        const setViewLimit = document.getElementById('setViewLimit');
+        const maxViews = document.getElementById('maxViews');
+        if (setViewLimit) setViewLimit.checked = false;
+        if (maxViews) {
+            maxViews.value = '';
+            maxViews.disabled = true;
+            maxViews.style.display = 'none';
+        }
+        
+        // Clear previous results
+        document.getElementById('shareLinkContainer').innerHTML = '';
+        document.getElementById('existingShares').innerHTML = '';
+        
+        // Load existing shares
+        loadExistingShares(item.id, type);
+        
+        // Show modal
+        document.getElementById('shareModal').style.display = 'flex';
+    }
+
+    // 🔒 CLOSE SHARE MODAL
+    function closeShareModal() {
+        document.getElementById('shareModal').style.display = 'none';
+        window.currentShareTarget = null;
+    }
+
+    // 📤 CLOSE UPLOAD MODAL
+    function closeUploadModal() {
+        document.getElementById('uploadModal').style.display = 'none';
+    }
+
+    // 🎨 GET FILE ICON
+    function getFileIcon(mimeType) {
+        if (!mimeType) return '📄';
+        
+        if (mimeType.startsWith('image/')) return '🖼️';
+        if (mimeType.startsWith('video/')) return '🎥';
+        if (mimeType.startsWith('audio/')) return '🎵';
+        if (mimeType.includes('pdf')) return '📕';
+        if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+        if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊';
+        if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return '📽️';
+        if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('archive')) return '📦';
+        if (mimeType.includes('text')) return '📃';
+        
+        return '📄';
+    }
+
+    // 📏 FORMAT FILE SIZE
+    function formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    }
+</script>
 </body>
 </html>
