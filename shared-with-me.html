@@ -3,17 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - CloudShare</title>
+    <title>Shared with Me - CloudShare</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .share-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .share-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .share-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .share-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .share-name {
+            font-weight: 600;
+            font-size: 16px;
+            color: #1f2937;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .share-meta {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .permission-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .permission-view {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .permission-download {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .permission-edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .users-list-modal {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background 0.2s;
+        }
+
+        .user-item:hover {
+            background: #f9fafb;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 14px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .section-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        .section-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+        }
+
+        .section-tab.active {
+            background: #6366f1;
+            color: white;
+        }
+
+        .search-box-inline {
+            margin-bottom: 15px;
+        }
+
+        .search-box-inline input {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body class="dashboard-page">
     <div class="dashboard-container">
+        <!-- HEADER -->
         <header class="topbar">
             <div class="topbar-left">
                 <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
                 <div class="logo">
-                    <span class="logo-icon">☁️</span>
-                    <span class="logo-text">CloudShare</span>
+                    <span class="logo-text">VSHARE</span>
                 </div>
             </div>
 
@@ -46,6 +213,7 @@
         </header>
 
         <div class="main-wrapper">
+            <!-- SIDEBAR -->
             <aside class="sidebar" id="sidebar">
                 <nav class="sidebar-nav">
                     <a href="/dashboard.html" class="nav-item">
@@ -54,7 +222,7 @@
                     </a>
                     <a href="#" class="nav-item"><span class="nav-icon">🕐</span><span class="nav-text">Recent</span></a>
                     <a href="#" class="nav-item"><span class="nav-icon">⭐</span><span class="nav-text">Favorites</span></a>
-                    <a href="/shared-with-me.html" class="nav-item">
+                    <a href="/shared-with-me.html" class="nav-item active">
                         <span class="nav-icon">👥</span>
                         <span class="nav-text">Shared with me</span>
                     </a>
@@ -62,7 +230,7 @@
                         <span class="nav-icon">🗑️</span>
                         <span class="nav-text">Trash</span>
                     </a>
-                    <a href="/settings.html" class="nav-item active">
+                    <a href="/settings.html" class="nav-item">
                         <span class="nav-icon">⚙️</span>
                         <span class="nav-text">Settings</span>
                     </a>
@@ -78,80 +246,343 @@
                 </div>
             </aside>
 
-            <main class="file-area settings-area">
+            <!-- MAIN CONTENT -->
+            <main class="file-area">
                 <div class="page-header">
-                    <h1 class="page-title">⚙️ Settings</h1>
-                </div>
-
-                <div class="settings-tabs">
-                    <button class="settings-tab active" onclick="showSettingsSection('profile')">Profile</button>
-                    <button class="settings-tab" onclick="showSettingsSection('storage')">Storage</button>
-                    <button class="settings-tab" onclick="showSettingsSection('security')">Security</button>
-                    <button class="settings-tab" onclick="showSettingsSection('sharing')">Sharing</button>
-                </div>
-
-                <div class="settings-section" id="profileSection">
-                    <div class="settings-card">
-                        <h3 class="settings-card-title">👤 PROFILE</h3>
-                        <form id="profileForm" onsubmit="updateProfile(event)">
-                            <div class="form-group">
-                                <label for="profileName">Full Name</label>
-                                <input type="text" id="profileName" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label for="profileEmail">Email</label>
-                                <input type="email" id="profileEmail" class="form-input" readonly>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Update Profile</button>
-                        </form>
+                    <h1 class="page-title">👥 Shared with Me</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="showAllUsersModal()">
+                            👥 View All Users
+                        </button>
                     </div>
                 </div>
 
-                <div class="settings-section" id="storageSection" style="display: none;">
-                    <div class="settings-card">
-                        <h3 class="settings-card-title">💾 STORAGE USAGE</h3>
-                        <p>Detailed storage breakdown will appear here.</p>
+                <!-- Section Tabs -->
+                <div class="section-tabs">
+                    <button class="section-tab active" onclick="switchSection('shared')">
+                        📤 Shared with Me
+                    </button>
+                    <button class="section-tab" onclick="switchSection('users')">
+                        👥 All Users
+                    </button>
+                </div>
+
+                <!-- Shared Items Section -->
+                <div id="sharedSection" class="content-section">
+                    <div id="sharedItemsContainer">
+                        <div class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <h3>Loading shared items...</h3>
+                        </div>
                     </div>
                 </div>
 
-                <div class="settings-section" id="securitySection" style="display: none;">
-                    <div class="settings-card">
-                        <h3 class="settings-card-title">🔒 SECURITY</h3>
-                        <button class="btn btn-secondary">Change Password</button>
+                <!-- All Users Section -->
+                <div id="usersSection" class="content-section" style="display: none;">
+                    <div class="search-box-inline">
+                        <input type="text" id="userSearchInput" placeholder="🔍 Search users by name or email..." oninput="searchUsersLive()">
+                    </div>
+                    <div id="allUsersContainer">
+                        <div class="empty-state">
+                            <div class="empty-icon">👥</div>
+                            <h3>Loading users...</h3>
+                        </div>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- All Users Modal -->
+    <div id="allUsersModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>👥 All Registered Users</h2>
+                <button class="modal-close" onclick="closeModal('allUsersModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="modalUserSearch" class="form-input" placeholder="🔍 Search users..." oninput="searchUsersInModal()" style="margin-bottom: 15px;">
+                <div id="modalUsersList" class="users-list-modal">
+                    <div style="text-align: center; padding: 40px; color: #6b7280;">
+                        Loading users...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="/js/utils.js"></script>
     <script src="/js/dashboard.js"></script>
-    <script src="/js/settings.js"></script>
+    <script src="/js/share.js"></script>
     
     <script>
+        let allUsers = [];
+        let sharedItems = [];
+
         document.addEventListener('DOMContentLoaded', function() {
-            if(window.checkAuthentication) checkAuthentication();
-            if(window.loadUserInfo) loadUserInfo();
-            if(window.loadStorageInfo) loadStorageInfo();
-            if(window.loadProfileData) loadProfileData();
+            checkAuthentication();
+            loadUserInfo();
+            loadStorageInfo();
+            loadSharedWithMe();
+            loadAllUsers();
         });
 
-        function showSettingsSection(sectionId) {
-            // Hide all
-            document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');
-            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-            
-            // Show target
-            const target = document.getElementById(sectionId + 'Section');
-            if(target) target.style.display = 'block';
-            
-            // Set active tab
-            event.currentTarget.classList.add('active');
+        // Switch between sections
+        function switchSection(section) {
+            document.querySelectorAll('.section-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (section === 'shared') {
+                document.getElementById('sharedSection').style.display = 'block';
+                document.getElementById('usersSection').style.display = 'none';
+            } else {
+                document.getElementById('sharedSection').style.display = 'none';
+                document.getElementById('usersSection').style.display = 'block';
+            }
         }
 
-        function toggleUserMenu() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        // Load shared items
+        async function loadSharedWithMe() {
+            try {
+                const apiBase = getApiBase();
+                const token = localStorage.getItem('token');
+
+                const response = await fetch(`${apiBase}/api/share/shared-with-me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    sharedItems = data.shares || [];
+                    displaySharedItems(sharedItems);
+                } else {
+                    showAlert(data.message || 'Failed to load shared items', 'error');
+                }
+
+            } catch (error) {
+                console.error('Load shared items error:', error);
+                document.getElementById('sharedItemsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">❌</div>
+                        <h3>Failed to load shared items</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Display shared items
+        function displaySharedItems(items) {
+            const container = document.getElementById('sharedItemsContainer');
+
+            if (!items || items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h3>No items shared with you</h3>
+                        <p>When someone shares files or folders with you, they'll appear here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="share-grid">';
+
+            items.forEach(item => {
+                const icon = item.type === 'folder' ? '📁' : getFileIcon(item.mime_type);
+                const permissionClass = `permission-${item.permission}`;
+                const permissionText = {
+                    'view': '👁️ View Only',
+                    'download': '📥 Can Download',
+                    'edit': '✏️ Can Edit'
+                }[item.permission] || '👁️ View';
+
+                html += `
+                    <div class="share-card" onclick="openSharedItem(${item.id}, '${item.type}')">
+                        <div class="share-icon">${icon}</div>
+                        <div class="share-name" title="${item.name}">${item.name}</div>
+                        <div class="share-meta">Shared by: ${item.owner_name}</div>
+                        <div class="share-meta">${formatDate(item.shared_at)}</div>
+                        ${item.size ? `<div class="share-meta">${formatFileSize(item.size)}</div>` : ''}
+                        <span class="permission-badge ${permissionClass}">${permissionText}</span>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Load all users
+        async function loadAllUsers() {
+            try {
+                const apiBase = getApiBase();
+                const token = localStorage.getItem('token');
+
+                const response = await fetch(`${apiBase}/api/share/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    allUsers = data.users || [];
+                    displayAllUsers(allUsers);
+                } else {
+                    showAlert(data.message || 'Failed to load users', 'error');
+                }
+
+            } catch (error) {
+                console.error('Load users error:', error);
+                document.getElementById('allUsersContainer').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">❌</div>
+                        <h3>Failed to load users</h3>
+                    </div>
+                `;
+            }
+        }
+
+        // Display all users
+        function displayAllUsers(users) {
+            const container = document.getElementById('allUsersContainer');
+
+            if (!users || users.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">👥</div>
+                        <h3>No other users found</h3>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div style="background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb;">';
+
+            users.forEach(user => {
+                const initial = user.username ? user.username[0].toUpperCase() : '?';
+                html += `
+                    <div class="user-item">
+                        <div class="user-info">
+                            <div class="user-avatar">${initial}</div>
+                            <div class="user-details">
+                                <div class="user-name">${user.username}</div>
+                                <div class="user-email">${user.email}</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: #9ca3af;">
+                            Joined ${formatDate(user.created_at)}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Search users live
+        function searchUsersLive() {
+            const query = document.getElementById('userSearchInput').value.toLowerCase();
+            const filtered = allUsers.filter(user => 
+                user.username.toLowerCase().includes(query) || 
+                user.email.toLowerCase().includes(query)
+            );
+            displayAllUsers(filtered);
+        }
+
+        // Show all users modal
+        function showAllUsersModal() {
+            const modal = document.getElementById('allUsersModal');
+            modal.style.display = 'flex';
+            loadUsersInModal();
+        }
+
+        // Load users in modal
+        async function loadUsersInModal() {
+            const container = document.getElementById('modalUsersList');
+            container.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
+
+            try {
+                const apiBase = getApiBase();
+                const token = localStorage.getItem('token');
+
+                const response = await fetch(`${apiBase}/api/share/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.users) {
+                    displayUsersInModal(data.users);
+                }
+
+            } catch (error) {
+                console.error('Load modal users error:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;">Failed to load users</div>';
+            }
+        }
+
+        // Display users in modal
+        function displayUsersInModal(users) {
+            const container = document.getElementById('modalUsersList');
+
+            if (!users || users.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">No users found</div>';
+                return;
+            }
+
+            let html = '';
+            users.forEach(user => {
+                const initial = user.username ? user.username[0].toUpperCase() : '?';
+                html += `
+                    <div class="user-item">
+                        <div class="user-info">
+                            <div class="user-avatar">${initial}</div>
+                            <div class="user-details">
+                                <div class="user-name">${user.username}</div>
+                                <div class="user-email">${user.email}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Search users in modal
+        function searchUsersInModal() {
+            const query = document.getElementById('modalUserSearch').value.toLowerCase();
+            const filtered = allUsers.filter(user => 
+                user.username.toLowerCase().includes(query) || 
+                user.email.toLowerCase().includes(query)
+            );
+            displayUsersInModal(filtered);
+        }
+
+        // Open shared item
+        function openSharedItem(id, type) {
+            if (type === 'file') {
+                window.location.href = `/dashboard.html?sharedFile=${id}`;
+            } else {
+                window.location.href = `/dashboard.html?sharedFolder=${id}`;
+            }
+        }
+
+        // Helper: Get file icon
+        function getFileIcon(mimeType) {
+            if (!mimeType) return '📄';
+            if (mimeType.startsWith('image/')) return '🖼️';
+            if (mimeType.startsWith('video/')) return '🎥';
+            if (mimeType.startsWith('audio/')) return '🎵';
+            if (mimeType.includes('pdf')) return '📕';
+            if (mimeType.includes('word')) return '📘';
+            if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📗';
+            if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📙';
+            if (mimeType.includes('zip') || mimeType.includes('rar')) return '🗜️';
+            return '📄';
         }
     </script>
 </body>
