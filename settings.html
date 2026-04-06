@@ -4,169 +4,1035 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - CloudShare</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <style>
+        /* ============================================
+           SETTINGS PAGE STYLES
+           ============================================ */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem 2rem;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-brand a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-info {
+            text-align: right;
+        }
+        
+        .user-name {
+            display: block;
+            font-weight: 600;
+        }
+        
+        .user-email {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+        
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Main Content */
+        .main-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+        
+        .page-header h1 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 2rem;
+            color: #333;
+        }
+        
+        .header-subtitle {
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        
+        /* Loading */
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-spinner p {
+            margin-top: 1rem;
+            color: #666;
+        }
+        
+        /* Settings Container */
+        .settings-container {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        /* Sidebar */
+        .settings-sidebar {
+            width: 220px;
+            flex-shrink: 0;
+        }
+        
+        .settings-tabs {
+            background: white;
+            border-radius: 16px;
+            padding: 0.75rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 2rem;
+        }
+        
+        .settings-tab {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: none;
+            background: transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #555;
+            text-align: left;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+        }
+        
+        .settings-tab:last-child {
+            margin-bottom: 0;
+        }
+        
+        .settings-tab:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .settings-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tab-icon {
+            font-size: 1.35rem;
+        }
+        
+        /* Content */
+        .settings-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .settings-section {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        
+        .settings-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .section-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            color: #333;
+        }
+        
+        .section-header p {
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        /* Profile Picture */
+        .profile-picture-section {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-radius: 16px;
+            border: 1px solid #667eea20;
+        }
+        
+        .profile-picture {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .profile-picture-info h3 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+        }
+        
+        .profile-picture-info p {
+            margin: 0 0 1rem 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .profile-picture-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        /* Forms */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-text {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.35rem;
+        }
+        
+        .form-static {
+            padding: 0.875rem 0;
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        /* Checkbox */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        
+        .checkbox-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .checkbox-item input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+        
+        .checkbox-item label {
+            cursor: pointer;
+            user-select: none;
+            flex: 1;
+        }
+        
+        .checkbox-item .checkbox-desc {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+        }
+        
+        .btn-sm {
+            padding: 0.625rem 1.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .form-actions {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        /* Storage Section */
+        .storage-overview {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .storage-card {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .storage-card .label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .storage-card .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #333;
+            margin-top: 0.5rem;
+        }
+        
+        .storage-progress-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .progress-bar {
+            height: 14px;
+            background: #e0e0e0;
+            border-radius: 7px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 7px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #ffc107, #fd7e14);
+        }
+        
+        .progress-fill.danger {
+            background: linear-gradient(90deg, #dc3545, #c82333);
+        }
+        
+        /* Trash Info */
+        .trash-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            background: #fff3cd;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 1px solid #ffc107;
+        }
+        
+        .trash-info-text {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .trash-icon {
+            font-size: 2rem;
+        }
+        
+        .trash-details strong {
+            color: #333;
+        }
+        
+        .trash-details span {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        /* Breakdown */
+        .storage-breakdown {
+            margin-top: 2rem;
+        }
+        
+        .storage-breakdown h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        .breakdown-item:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+        }
+        
+        .breakdown-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .breakdown-info {
+            flex: 1;
+        }
+        
+        .breakdown-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .breakdown-type {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .breakdown-size {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .breakdown-meta {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+        
+        .breakdown-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .breakdown-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        /* Activity Log */
+        .activity-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .activity-log {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        .activity-item:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+        }
+        
+        .activity-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 10px;
+        }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-text {
+            color: #333;
+        }
+        
+        .activity-text strong {
+            font-weight: 600;
+        }
+        
+        .activity-target {
+            color: #667eea;
+            margin-left: 0.35rem;
+        }
+        
+        .activity-time {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 0.25rem;
+        }
+        
+        .loading-text, .empty-text, .error-text {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        
+        .error-text {
+            color: #dc3545;
+        }
+        
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 900px) {
+            .settings-container {
+                flex-direction: column;
+            }
+            
+            .settings-sidebar {
+                width: 100%;
+            }
+            
+            .settings-tabs {
+                display: flex;
+                overflow-x: auto;
+                position: static;
+                gap: 0.5rem;
+            }
+            
+            .settings-tab {
+                flex-direction: column;
+                min-width: 80px;
+                text-align: center;
+                padding: 0.875rem 0.75rem;
+                margin-bottom: 0;
+            }
+            
+            .tab-text {
+                font-size: 0.8rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .profile-picture-section {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .profile-picture-actions {
+                justify-content: center;
+            }
+            
+            .storage-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .trash-info {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .activity-controls {
+                flex-direction: column;
+            }
+            
+            .activity-controls .btn {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
-<body class="dashboard-page">
-    <div class="dashboard-container">
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
-                <div class="logo">
-                    <span class="logo-icon">☁️</span>
-                    <span class="logo-text">CloudShare</span>
-                </div>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="dashboard.html">
+                    <span class="logo-icon">🔷</span>
+                    <span>VSHARE</span>
+                </a>
             </div>
-
-            <div class="topbar-center">
-                <div class="search-box">
-                    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search...">
-                </div>
+            
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-link">
+                    <span>🏠</span> Dashboard
+                </a>
+                <a href="trash.html" class="nav-link">
+                    <span>🗑️</span> Trash
+                </a>
+                <a href="settings.html" class="nav-link active">
+                    <span>⚙️</span> Settings
+                </a>
             </div>
-
-            <div class="topbar-right">
-                <button class="icon-btn notification-btn" title="Notifications">🔔</button>
-                <div class="user-menu">
-                    <button class="user-btn" id="userMenuBtn" onclick="toggleUserMenu()">
-                        <span class="user-avatar">👤</span>
-                        <span class="user-name" id="userName">User</span>
-                        <span class="dropdown-arrow">▼</span>
-                    </button>
-                    <div class="user-dropdown" id="userDropdown" style="display: none;">
-                        <a href="/settings.html" class="dropdown-item">
-                            <span class="item-icon">⚙️</span>
-                            <span>Settings</span>
-                        </a>
-                        <a href="#" class="dropdown-item" onclick="logout()">
-                            <span class="item-icon">🚪</span>
-                            <span>Logout</span>
-                        </a>
-                    </div>
+            
+            <div class="nav-user">
+                <div class="user-info">
+                    <span class="user-name" id="userName">User</span>
+                    <span class="user-email" id="userEmail">user@example.com</span>
                 </div>
+                <button class="btn-logout" onclick="logout()">
+                    🚪 Logout
+                </button>
             </div>
-        </header>
+        </div>
+    </nav>
 
-        <div class="main-wrapper">
-            <aside class="sidebar" id="sidebar">
-                <nav class="sidebar-nav">
-                    <a href="/dashboard.html" class="nav-item">
-                        <span class="nav-icon">📁</span>
-                        <span class="nav-text">My Files</span>
-                    </a>
-                    <a href="/shared-with-me.html" class="nav-item">
-                        <span class="nav-icon">👥</span>
-                        <span class="nav-text">Shared with me</span>
-                    </a>
-                    <a href="/trash.html" class="nav-item">
-                        <span class="nav-icon">🗑️</span>
-                        <span class="nav-text">Trash</span>
-                    </a>
-                    <a href="/settings.html" class="nav-item active">
-                        <span class="nav-icon">⚙️</span>
-                        <span class="nav-text">Settings</span>
-                    </a>
-                </nav>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>
+                <span>⚙️</span>
+                Settings
+            </h1>
+            <p class="header-subtitle">Manage your account and preferences</p>
+        </div>
 
-                <div class="storage-info">
-    <span id="storageUsed">0 GB</span> of <span id="storageTotal">100 GB</span>
-</div>
-<div class="storage-bar">
-    <div class="storage-bar-fill" id="storageBarFill" style="width: 0%"></div>
-</div>
-                </div>
-            </aside>
+        <!-- Loading -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            <p>Loading settings...</p>
+        </div>
 
-            <main class="file-area settings-area">
-                <div class="page-header">
-                    <h1 class="page-title">⚙️ Settings</h1>
-                </div>
-
+        <!-- Settings Container -->
+        <div class="settings-container" id="settingsContent" style="display: none;">
+            
+            <!-- Sidebar -->
+            <div class="settings-sidebar">
                 <div class="settings-tabs">
-                    <button class="settings-tab active" onclick="showSettingsSection('profile')">Profile</button>
-                    <button class="settings-tab" onclick="showSettingsSection('storage')">Storage</button>
-                    <button class="settings-tab" onclick="showSettingsSection('security')">Security</button>
+                    <button class="settings-tab active" data-section="profile" onclick="showSection('profile')">
+                        <span class="tab-icon">👤</span>
+                        <span class="tab-text">Profile</span>
+                    </button>
+                    <button class="settings-tab" data-section="security" onclick="showSection('security')">
+                        <span class="tab-icon">🔒</span>
+                        <span class="tab-text">Security</span>
+                    </button>
+                    <button class="settings-tab" data-section="storage" onclick="showSection('storage')">
+                        <span class="tab-icon">💾</span>
+                        <span class="tab-text">Storage</span>
+                    </button>
                 </div>
+            </div>
 
-                <div class="settings-section" id="profileSection">
-                    <div class="settings-card">
-                        <h3 class="settings-card-title">👤 PROFILE</h3>
-                        <form id="profileForm" onsubmit="updateProfile(event)">
+            <!-- Content -->
+            <div class="settings-content">
+
+                <!-- ========== PROFILE SECTION ========== -->
+                <div class="settings-section active" id="profileSection">
+                    <div class="section-header">
+                        <h2>👤 Profile</h2>
+                        <p>Manage your personal information</p>
+                    </div>
+
+                    <!-- Profile Form -->
+                    <form id="profileForm">
+                        <div class="form-row">
                             <div class="form-group">
-                                <label for="profileName">Full Name</label>
-                                <input type="text" id="profileName" class="form-input" placeholder="Your Name">
+                                <label for="profileUsername">Username</label>
+                                <input type="text" id="profileUsername" class="form-control" required minlength="3" placeholder="Enter username">
                             </div>
                             <div class="form-group">
                                 <label for="profileEmail">Email</label>
-                                <input type="email" id="profileEmail" class="form-input" readonly value="user@example.com">
+                                <input type="email" id="profileEmail" class="form-control" required placeholder="Enter email">
                             </div>
-                            <button type="submit" class="btn btn-primary">Update Profile</button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="settings-section" id="storageSection" style="display: none;">
-                    <div class="settings-card">
-                        <h3 class="settings-card-title">💾 STORAGE</h3>
-                        <div class="storage-bar-large">
-                            <div class="storage-bar-fill" style="width: 78%"></div>
                         </div>
-                       <div class="storage-info">
-    <span id="storageUsed">0 GB</span> of <span id="storageTotal">100 GB</span>
-</div>
-<div class="storage-bar">
-    <div class="storage-bar-fill" id="storageBarFill" style="width: 0%"></div>
-</div>
-                    </div>
-                </div>
-
-                <div class="settings-section" id="securitySection" style="display: none;">
-                    <div class="settings-card">
-                        <h3 class="settings-card-title">🔒 SECURITY</h3>
                         <div class="form-group">
-                            <label for="newPassword">New Password</label>
-                            <input type="password" id="newPassword" class="form-input">
+                            <label>Member Since</label>
+                            <div class="form-static" id="memberSince">Loading...</div>
                         </div>
-                        <button class="btn btn-primary">Change Password</button>
-                    </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">💾 Save Profile</button>
+                        </div>
+                    </form>
                 </div>
-            </main>
+
+                <!-- ========== SECURITY SECTION ========== -->
+                <div class="settings-section" id="securitySection">
+                    <div class="section-header">
+                        <h2>🔒 Security</h2>
+                        <p>Manage your password and account security</p>
+                    </div>
+
+                    <!-- Change Password -->
+                    <form id="passwordForm">
+                        <h3 style="margin-bottom: 1.5rem;">Change Password</h3>
+                        
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" class="form-control" required placeholder="Enter current password">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newPassword">New Password</label>
+                                <input type="password" id="newPassword" class="form-control" required minlength="6" placeholder="Enter new password">
+                                <p class="form-text">Minimum 6 characters</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm New Password</label>
+                                <input type="password" id="confirmPassword" class="form-control" required placeholder="Confirm new password">
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">🔑 Change Password</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ========== STORAGE SECTION ========== -->
+                <div class="settings-section" id="storageSection">
+                    <div class="section-header">
+                        <h2>💾 Storage</h2>
+                        <p>Monitor and manage your storage usage</p>
+                    </div>
+
+                    <!-- Storage Overview -->
+                    <div class="storage-overview">
+                        <div class="storage-card">
+                            <div class="label">Used</div>
+                            <div class="value" id="storageUsed">0 B</div>
+                        </div>
+                        <div class="storage-card">
+                            <div class="label">Total</div>
+                            <div class="value" id="storageQuota">0 B</div>
+                        </div>
+                        <div class="storage-card">
+                            <div class="label">Available</div>
+                            <div class="value" id="storageAvailable">0 B</div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="storage-progress-section">
+                        <div class="progress-header">
+                            <span>Storage Usage</span>
+                            <span id="storagePercentage">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="storageProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Trash Info -->
+                    <div class="trash-info">
+                        <div class="trash-info-text">
+                            <div class="trash-icon">🗑️</div>
+                            <div class="trash-details">
+                                <strong><span id="trashCount">0</span> items in trash</strong>
+                                <br>
+                                <span>Using <span id="trashSize">0 B</span> of storage</span>
+                            </div>
+                        </div>
+                        <a href="trash.html" class="btn btn-secondary btn-sm">Manage Trash →</a>
+                    </div>
+
+                    <!-- Storage Breakdown -->
+                    <div class="storage-breakdown">
+                        <h3>📊 Storage Breakdown</h3>
+                        <div id="storageBreakdownContainer">
+                            <p class="loading-text">Loading...</p>
+                        </div>
+                    </div>
+
+                    <!-- Storage Settings -->
+                    <form id="storageForm" style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1.5rem;">⚙️ Storage Settings</h3>
+                        
+                        <div class="form-group">
+                            <label for="autoDeleteTrashDays">Auto-delete trash items after</label>
+                            <select id="autoDeleteTrashDays" class="form-control">
+                                <option value="7">7 days</option>
+                                <option value="14">14 days</option>
+                                <option value="30">30 days</option>
+                                <option value="60">60 days</option>
+                                <option value="90">90 days</option>
+                            </select>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="autoBackup">
+                                <label for="autoBackup">
+                                    <strong>Enable automatic backup</strong>
+                                    <div class="checkbox-desc">Automatically backup your files to secondary storage</div>
+                                </label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="compressUploads">
+                                <label for="compressUploads">
+                                    <strong>Compress uploads</strong>
+                                    <div class="checkbox-desc">Automatically compress files to save storage space</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">💾 Save Storage Settings</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
         </div>
-    </div>
+    </main>
 
-    <script src="/js/utils.js"></script>
-    <script src="/js/dashboard.js"></script>
-    <script src="/js/settings.js"></script>
-    
-    <script>
-        // Tab Switching Logic
-        function showSettingsSection(sectionId) {
-            // Hide all sections
-            document.querySelectorAll('.settings-section').forEach(section => {
-                section.style.display = 'none';
-            });
-            // Show selected section
-            document.getElementById(sectionId + 'Section').style.display = 'block';
-            
-            // Update active tab styling
-            document.querySelectorAll('.settings-tab').forEach(tab => {
-                tab.classList.remove('active');
-                if(tab.innerText.toLowerCase() === sectionId) tab.classList.add('active');
-            });
-        }
-
-        // Dropdown Toggle
-        function toggleUserMenu() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-    // Initialization calls from your external JS files
-    if (typeof checkAuthentication === "function") checkAuthentication();
-    if (typeof loadUserInfo === "function") loadUserInfo();
-    
-    // ADD THIS LINE to fetch the real storage data from your database:
-    if (typeof loadStorageInfo === "function") loadStorageInfo();
-});
-    </script>
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/settings.js"></script>
 </body>
 </html>
