@@ -1,15 +1,27 @@
 /* ============================================
-   CLOUDSHARE - UTILITY FUNCTIONS
+   CLOUDSHARE - UTILITY FUNCTIONS (FIXED)
    ============================================ */
 
-// API Base URL - Change this to your server IP
-const API_BASE_URL = 'http://localhost:5000/api';
+// ============================================
+// API BASE URL - DYNAMIC (FIXES LAN ACCESS)
+// ============================================
+
+function getApiBaseUrl() {
+    const hostname = window.location.hostname;
+    const port = 5000;
+    const protocol = window.location.protocol;
+    return `${protocol}//${hostname}:${port}/api`;
+}
+
+// Dynamic API Base URL - works on localhost AND LAN
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('[CloudShare] API URL:', API_BASE_URL);
 
 // ============================================
 // LOCAL STORAGE HELPERS
 // ============================================
 
-// Save data to localStorage
 function saveToStorage(key, data) {
     try {
         localStorage.setItem(key, JSON.stringify(data));
@@ -20,23 +32,17 @@ function saveToStorage(key, data) {
     }
 }
 
-// Get data from localStorage
 function getFromStorage(key) {
     const item = localStorage.getItem(key);
-    
-    // If nothing is found, return null
     if (!item) return null;
 
     try {
-        // Try to parse it as a JSON object (for user data)
         return JSON.parse(item);
     } catch (error) {
-        // If parsing fails (which it will for the raw JWT token), 
-        // just return the raw string instead of throwing an error!
         return item;
     }
 }
-// Remove data from localStorage
+
 function removeFromStorage(key) {
     try {
         localStorage.removeItem(key);
@@ -47,7 +53,6 @@ function removeFromStorage(key) {
     }
 }
 
-// Clear all localStorage
 function clearStorage() {
     try {
         localStorage.clear();
@@ -62,47 +67,126 @@ function clearStorage() {
 // AUTHENTICATION HELPERS
 // ============================================
 
-// Get auth token
 function getAuthToken() {
     return getFromStorage('token');
 }
 
-// Get current user
 function getCurrentUser() {
     return getFromStorage('user');
 }
 
-// Check if user is logged in
 function isLoggedIn() {
     const token = getAuthToken();
     const user = getCurrentUser();
     return token && user;
 }
 
-// Save auth data
 function saveAuthData(token, user) {
-    saveToStorage('token', token);
-    saveToStorage('user', user);
+    console.log('[Auth] Saving auth data...');
+    console.log('[Auth] Token type:', typeof token);
+    console.log('[Auth] Token length:', token ? token.length : 0);
+    
+    // Store token as plain string, NOT JSON stringified
+    if (typeof token === 'string') {
+        localStorage.setItem('token', token);
+    } else {
+        localStorage.setItem('token', JSON.stringify(token));
+    }
+    
+    // Store user as JSON
+    if (typeof user === 'string') {
+        localStorage.setItem('user', user);
+    } else {
+        localStorage.setItem('user', JSON.stringify(user));
+    }
+    
+    console.log('[Auth] Auth data saved successfully');
 }
 
-// Clear auth data (logout)
+function getAuthToken() {
+    const token = localStorage.getItem('token');
+    
+    if (!token) return null;
+    
+    // Remove extra quotes if token was double-stringified
+    let cleanToken = token;
+    if (cleanToken.startsWith('"') && cleanToken.endsWith('"')) {
+        cleanToken = cleanToken.slice(1, -1);
+    }
+    
+    return cleanToken;
+}
+
 function clearAuthData() {
     removeFromStorage('token');
     removeFromStorage('user');
-}
-
-// Check authentication and redirect if not logged in
-function checkAuthentication() {
+}function checkAuthentication() {
     const token = getAuthToken();
     const user = getCurrentUser();
-    return !!(token && user);
+    
+    console.log('[Auth] Checking authentication...');
+    console.log('[Auth] Token exists:', !!token);
+    console.log('[Auth] User exists:', !!user);
+    
+    if (!token || !user) {
+        console.log('[Auth] Not authenticated, redirecting to login...');
+        // Only redirect if not already on login/register/index page
+        const currentPage = window.location.pathname;
+        const publicPages = ['/login.html', '/register.html', '/index.html', '/', '/public-share.html'];
+        
+        if (!publicPages.some(page => currentPage.endsWith(page))) {
+            window.location.href = 'login.html';
+        }
+        return false;
+    }
+    
+    // Validate token format (basic check)
+    if (typeof token === 'string' && token.split('.').length === 3) {
+        try {
+            // Decode token payload (without verification)
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            
+            // Check if expired
+            if (payload.exp && payload.exp * 1000 < Date.now()) {
+                console.log('[Auth] Token expired, clearing and redirecting...');
+                clearAuthData();
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            console.log('[Auth] Token valid, expires:', new Date(payload.exp * 1000).toLocaleString());
+        } catch (e) {
+            console.warn('[Auth] Could not decode token:', e.message);
+        }
+    }
+    
+    return true;
+}
+
+
+
+function checkAuth() {
+    const token = getAuthToken();
+    const user = getCurrentUser();
+    
+    if (!token || !user) {
+        console.log('Not authenticated, redirecting to login...');
+        window.location.href = 'login.html';
+        return false;
+    }
+    
+    return true;
+}
+
+function logout() {
+    clearAuthData();
+    window.location.href = 'login.html';
 }
 
 // ============================================
-// API REQUEST HELPERS
+// API REQUEST HELPERS (FIXED FOR LAN)
 // ============================================
 
-// Make API request with authentication
 async function apiRequest(endpoint, options = {}) {
     const token = getAuthToken();
     
@@ -122,13 +206,110 @@ async function apiRequest(endpoint, options = {}) {
         }
     };
     
-    // Don't set Content-Type for FormData (file uploads)
+    // Don't set Content-Type for FormData
     if (options.body instanceof FormData) {
         delete config.headers['Content-Type'];
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+        const url = `${API_BASE_URL}${endpoint}`;
+        console.log('[API]', config.method || 'GET', url);
+        
+        const response = await fetch(url, config);
+        
+        // Handle non-JSON responses
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            return { success: true };
+        }
+        
+        const data = await response.json();
+        
+        // Handle auth errors - ONLY redirect on 401 (unauthorized)
+        // 403 might be a permission issue, not necessarily bad token
+        if (response.status === 401) {
+            console.warn('[API] Token invalid or missing, redirecting to login');
+            clearAuthData();
+            // Only redirect if not already on login page
+            if (!window.location.pathname.includes('login')) {
+                window.location.href = 'login.html';
+            }
+            return null;
+        }
+        
+        if (response.status === 403) {
+            console.warn('[API] 403 Forbidden:', data.message);
+            // Check if it's a token issue
+            if (data.message && data.message.includes('token')) {
+                console.warn('[API] Token expired or invalid, redirecting to login');
+                clearAuthData();
+                if (!window.location.pathname.includes('login')) {
+                    window.location.href = 'login.html';
+                }
+                return null;
+            }
+            // Otherwise it's a permission error, don't redirect
+            throw new Error(data.message || 'Access denied');
+        }
+        
+        if (!response.ok) {
+            throw new Error(data.message || 'Request failed');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('[API] Request Error:', error);
+        throw error;
+    }
+}
+
+async function apiGet(endpoint) {
+    return apiRequest(endpoint, { method: 'GET' });
+}
+
+async function apiPost(endpoint, body) {
+    return apiRequest(endpoint, {
+        method: 'POST',
+        body: body instanceof FormData ? body : JSON.stringify(body)
+    });
+}
+
+async function apiPut(endpoint, body) {
+    return apiRequest(endpoint, {
+        method: 'PUT',
+        body: JSON.stringify(body)
+    });
+}
+
+async function apiDelete(endpoint, body) {
+    const options = { method: 'DELETE' };
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+    return apiRequest(endpoint, options);
+}
+
+async function apiPostFormData(endpoint, formData) {
+    const token = getAuthToken();
+    
+    const headers = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    try {
+        const url = `${API_BASE_URL}${endpoint}`;
+        console.log('[API] POST FormData', url);
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: formData
+        });
+        
         const data = await response.json();
         
         if (!response.ok) {
@@ -137,44 +318,28 @@ async function apiRequest(endpoint, options = {}) {
         
         return data;
     } catch (error) {
-        console.error('API Request Error:', error);
+        console.error('[API] FormData Request Error:', error);
         throw error;
     }
 }
 
-// GET request
-async function apiGet(endpoint) {
-    return apiRequest(endpoint, { method: 'GET' });
-}
+// ============================================
+// GET API BASE (for dashboard.js / upload.js)
+// ============================================
 
-// POST request
-async function apiPost(endpoint, body) {
-    return apiRequest(endpoint, {
-        method: 'POST',
-        body: body instanceof FormData ? body : JSON.stringify(body)
-    });
-}
-
-// PUT request
-async function apiPut(endpoint, body) {
-    return apiRequest(endpoint, {
-        method: 'PUT',
-        body: JSON.stringify(body)
-    });
-}
-
-// DELETE request
-async function apiDelete(endpoint) {
-    return apiRequest(endpoint, { method: 'DELETE' });
+function getApiBase() {
+    const hostname = window.location.hostname;
+    const port = 5000;
+    const protocol = window.location.protocol;
+    return `${protocol}//${hostname}:${port}`;
 }
 
 // ============================================
 // FORMAT HELPERS
 // ============================================
 
-// Format file size (bytes to human readable)
 function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0 || !bytes) return '0 Bytes';
     
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -183,37 +348,35 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// Format date
 function formatDate(dateString) {
+    if (!dateString) return 'Unknown';
+    
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Unknown';
+    
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
     const diffMinutes = Math.floor(diffTime / (1000 * 60));
     
-    if (diffMinutes < 1) {
-        return 'Just now';
-    } else if (diffMinutes < 60) {
-        return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-    } else if (diffHours < 24) {
-        return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    } else if (diffDays === 1) {
-        return 'Yesterday';
-    } else if (diffDays < 7) {
-        return `${diffDays} days ago`;
-    } else {
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    }
+    if (diffMinutes < 1) return 'Just now';
+    if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
 }
 
-// Format date for display
 function formatDateFull(dateString) {
+    if (!dateString) return 'Unknown';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Unknown';
     return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -225,84 +388,32 @@ function formatDateFull(dateString) {
 // FILE TYPE HELPERS
 // ============================================
 
-// Get file extension
 function getFileExtension(filename) {
+    if (!filename) return '';
     return filename.slice((filename.lastIndexOf('.') - 1 >>> 0) + 2).toLowerCase();
 }
 
-// Get file icon based on type
 function getFileIcon(filename, isFolder = false) {
     if (isFolder) return '📁';
+    if (!filename) return '📄';
     
     const ext = getFileExtension(filename);
     
     const iconMap = {
-        // Documents
-        'pdf': '📄',
-        'doc': '📝',
-        'docx': '📝',
-        'txt': '📝',
-        'rtf': '📝',
-        
-        // Spreadsheets
-        'xls': '📊',
-        'xlsx': '📊',
-        'csv': '📊',
-        
-        // Presentations
-        'ppt': '📊',
-        'pptx': '📊',
-        
-        // Images
-        'jpg': '🖼️',
-        'jpeg': '🖼️',
-        'png': '🖼️',
-        'gif': '🖼️',
-        'bmp': '🖼️',
-        'svg': '🖼️',
-        'webp': '🖼️',
-        
-        // Videos
-        'mp4': '📹',
-        'avi': '📹',
-        'mov': '📹',
-        'wmv': '📹',
-        'mkv': '📹',
-        'webm': '📹',
-        
-        // Audio
-        'mp3': '🎵',
-        'wav': '🎵',
-        'ogg': '🎵',
-        'flac': '🎵',
-        
-        // Archives
-        'zip': '📦',
-        'rar': '📦',
-        '7z': '📦',
-        'tar': '📦',
-        'gz': '📦',
-        
-        // Code
-        'html': '💻',
-        'css': '💻',
-        'js': '💻',
-        'json': '💻',
-        'xml': '💻',
-        'php': '💻',
-        'py': '💻',
-        'java': '💻',
-        'c': '💻',
-        'cpp': '💻',
-        
-        // Default
-        'default': '📄'
+        'pdf': '📄', 'doc': '📝', 'docx': '📝', 'txt': '📝', 'rtf': '📝',
+        'xls': '📊', 'xlsx': '📊', 'csv': '📊',
+        'ppt': '📊', 'pptx': '📊',
+        'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'bmp': '🖼️', 'svg': '🖼️', 'webp': '🖼️',
+        'mp4': '📹', 'avi': '📹', 'mov': '📹', 'wmv': '📹', 'mkv': '📹', 'webm': '📹',
+        'mp3': '🎵', 'wav': '🎵', 'ogg': '🎵', 'flac': '🎵',
+        'zip': '📦', 'rar': '📦', '7z': '📦', 'tar': '📦', 'gz': '📦',
+        'html': '💻', 'css': '💻', 'js': '💻', 'json': '💻', 'xml': '💻',
+        'php': '💻', 'py': '💻', 'java': '💻', 'c': '💻', 'cpp': '💻'
     };
     
-    return iconMap[ext] || iconMap['default'];
+    return iconMap[ext] || '📄';
 }
 
-// Get file type category
 function getFileCategory(filename) {
     const ext = getFileExtension(filename);
     
@@ -318,15 +429,12 @@ function getFileCategory(filename) {
     };
     
     for (const [category, extensions] of Object.entries(categories)) {
-        if (extensions.includes(ext)) {
-            return category;
-        }
+        if (extensions.includes(ext)) return category;
     }
     
     return 'other';
 }
 
-// Check if file is previewable
 function isPreviewable(filename) {
     const ext = getFileExtension(filename);
     const previewable = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp', 'pdf', 'txt', 'mp4', 'webm'];
@@ -337,7 +445,6 @@ function isPreviewable(filename) {
 // UI HELPERS
 // ============================================
 
-// Show alert message
 function showAlert(message, type = 'success', containerId = 'alertMessage') {
     const alertContainer = document.getElementById(containerId);
     if (!alertContainer) return;
@@ -346,28 +453,15 @@ function showAlert(message, type = 'success', containerId = 'alertMessage') {
     alertContainer.className = `alert alert-${type}`;
     alertContainer.style.display = 'block';
     
-    // Auto hide after 5 seconds
     setTimeout(() => {
         alertContainer.style.display = 'none';
     }, 5000);
 }
 
-// Show success alert
-function showSuccess(message, containerId) {
-    showAlert(message, 'success', containerId);
-}
+function showSuccess(message, containerId) { showAlert(message, 'success', containerId); }
+function showError(message, containerId) { showAlert(message, 'error', containerId); }
+function showWarning(message, containerId) { showAlert(message, 'warning', containerId); }
 
-// Show error alert
-function showError(message, containerId) {
-    showAlert(message, 'error', containerId);
-}
-
-// Show warning alert
-function showWarning(message, containerId) {
-    showAlert(message, 'warning', containerId);
-}
-
-// Toggle password visibility
 function togglePasswordVisibility(inputId) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(inputId + '-icon');
@@ -381,31 +475,21 @@ function togglePasswordVisibility(inputId) {
     }
 }
 
-// Toggle element visibility
 function toggleElement(elementId) {
     const element = document.getElementById(elementId);
-    if (element) {
-        element.style.display = element.style.display === 'none' ? 'block' : 'none';
-    }
+    if (element) element.style.display = element.style.display === 'none' ? 'block' : 'none';
 }
 
-// Show element
 function showElement(elementId) {
     const element = document.getElementById(elementId);
-    if (element) {
-        element.style.display = 'block';
-    }
+    if (element) element.style.display = 'block';
 }
 
-// Hide element
 function hideElement(elementId) {
     const element = document.getElementById(elementId);
-    if (element) {
-        element.style.display = 'none';
-    }
+    if (element) element.style.display = 'none';
 }
 
-// Set button loading state
 function setButtonLoading(buttonId, isLoading, loadingText = 'Loading...') {
     const button = document.getElementById(buttonId);
     if (!button) return;
@@ -421,24 +505,35 @@ function setButtonLoading(buttonId, isLoading, loadingText = 'Loading...') {
 }
 
 // ============================================
+// LOAD USER INFO IN NAVBAR
+// ============================================
+
+function loadUserInfo() {
+    const user = getCurrentUser();
+    
+    if (user) {
+        const userNameEl = document.getElementById('userName');
+        const userEmailEl = document.getElementById('userEmail');
+        
+        if (userNameEl) userNameEl.textContent = user.username || user.name || 'User';
+        if (userEmailEl) userEmailEl.textContent = user.email || '';
+    }
+}
+
+// ============================================
 // VALIDATION HELPERS
 // ============================================
 
-// Validate email
 function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Validate password (min 8 chars)
 function isValidPassword(password) {
     return password.length >= 8;
 }
 
-// Validate password strength
 function getPasswordStrength(password) {
     let strength = 0;
-    
     if (password.length >= 8) strength++;
     if (password.length >= 12) strength++;
     if (/[A-Z]/.test(password)) strength++;
@@ -455,12 +550,10 @@ function getPasswordStrength(password) {
 // GENERATE HELPERS
 // ============================================
 
-// Generate unique ID
 function generateUniqueId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-// Generate random string
 function generateRandomString(length = 16) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -474,7 +567,6 @@ function generateRandomString(length = 16) {
 // DEBOUNCE / THROTTLE
 // ============================================
 
-// Debounce function (delay execution)
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -487,7 +579,6 @@ function debounce(func, wait) {
     };
 }
 
-// Throttle function (limit execution rate)
 function throttle(func, limit) {
     let inThrottle;
     return function(...args) {
@@ -508,7 +599,6 @@ async function copyToClipboard(text) {
         await navigator.clipboard.writeText(text);
         return true;
     } catch (error) {
-        // Fallback for older browsers
         const textArea = document.createElement('textarea');
         textArea.value = text;
         textArea.style.position = 'fixed';
@@ -527,16 +617,12 @@ async function copyToClipboard(text) {
     }
 }
 
-// ============================================
-// CONFIRMATION DIALOG
-// ============================================
-
 function confirmAction(message) {
     return confirm(message);
 }
 
 // ============================================
-// CONSOLE LOG FOR DEBUGGING
+// CONSOLE LOG
 // ============================================
 
 function log(message, data = null) {
@@ -554,3 +640,108 @@ function logError(message, error = null) {
         console.error(`[CloudShare Error] ${message}`);
     }
 }
+
+// ============================================
+// NOTIFICATION SYSTEM
+// ============================================
+
+function showNotification(message, type = 'info', duration = 4000) {
+    let container = document.getElementById('notificationContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notificationContainer';
+        container.className = 'notification-container';
+        document.body.appendChild(container);
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    
+    const icons = {
+        'success': '✅',
+        'error': '❌',
+        'warning': '⚠️',
+        'info': 'ℹ️'
+    };
+    
+    notification.innerHTML = `
+        <span class="notification-icon">${icons[type] || icons.info}</span>
+        <span class="notification-message">${message}</span>
+        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    container.appendChild(notification);
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.classList.add('notification-fade-out');
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, duration);
+    }
+    
+    return notification;
+}
+
+// ============================================
+// NOTIFICATION CSS (Auto-inject)
+// ============================================
+
+(function injectNotificationStyles() {
+    if (document.getElementById('notification-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+        
+        .notification {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: notification-slide-in 0.3s ease-out;
+            background: white;
+            border-left: 4px solid #007bff;
+        }
+        
+        .notification-success { border-left-color: #28a745; background: #d4edda; }
+        .notification-error { border-left-color: #dc3545; background: #f8d7da; }
+        .notification-warning { border-left-color: #ffc107; background: #fff3cd; }
+        .notification-info { border-left-color: #007bff; background: #d1ecf1; }
+        
+        .notification-icon { font-size: 1.25rem; flex-shrink: 0; }
+        .notification-message { flex: 1; font-size: 0.95rem; color: #333; }
+        
+        .notification-close {
+            background: none; border: none; font-size: 1.5rem;
+            color: #666; cursor: pointer; padding: 0; line-height: 1; opacity: 0.6;
+        }
+        .notification-close:hover { opacity: 1; }
+        
+        .notification-fade-out { animation: notification-fade-out 0.3s ease-out forwards; }
+        
+        @keyframes notification-slide-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes notification-fade-out {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+})();
