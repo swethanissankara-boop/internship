@@ -1,5 +1,5 @@
 /* ============================================
-   VSHARE - FILE UPLOAD
+   VSHARE - FILE UPLOAD (WITH NESTED FOLDERS)
    ============================================ */
 
 // ============================================
@@ -9,6 +9,7 @@
 let uploadQueue = [];
 let isUploading = false;
 let currentUploadXHR = null;
+let folderStructure = {}; // Store folder hierarchy
 
 // ============================================
 // API BASE URL
@@ -55,7 +56,7 @@ function handleFileSelect(event) {
 
     // Add files to queue
     for (let i = 0; i < files.length; i++) {
-        addToUploadQueue(files[i], null);
+        addToUploadQueue(files[i], null, null);
     }
 
     // Start upload process
@@ -69,7 +70,7 @@ function handleFileSelect(event) {
 }
 
 // ============================================
-// HANDLE FOLDER SELECTION
+// HANDLE FOLDER SELECTION (NESTED STRUCTURE)
 // ============================================
 
 async function handleFolderSelect(event) {
@@ -79,44 +80,47 @@ async function handleFolderSelect(event) {
         return;
     }
 
-    console.log('Selected folder with files:', files.length);
-
-    // Get folder name from the first file's path
-    const firstFilePath = files[0].webkitRelativePath || files[0].name;
-    const pathParts = firstFilePath.split('/');
-    const mainFolderName = pathParts[0];
-
-    console.log('Main folder name:', mainFolderName);
+    console.log('📁 Selected folder with files:', files.length);
 
     // Show upload modal first
     showUploadModal();
     updateUploadUI();
 
     try {
-        // Create the main folder first
-        const folderId = await createFolderForUpload(mainFolderName);
+        // Build folder structure from file paths
+        const folderTree = buildFolderTree(files);
+        console.log('📂 Folder tree:', folderTree);
 
-        if (!folderId) {
-            showAlert('Failed to create folder', 'error');
-            return;
-        }
+        // Create all folders recursively
+        const currentParentId = typeof currentFolderId !== 'undefined' ? currentFolderId : null;
+        await createFolderStructure(folderTree, currentParentId);
 
-        console.log('Created folder with ID:', folderId);
-
-        // Add all files to queue with the folder ID
+        // Add all files to upload queue with their respective folder IDs
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            addToUploadQueue(file, folderId);
+            const filePath = file.webkitRelativePath || file.name;
+            const pathParts = filePath.split('/');
+            
+            // Remove filename to get folder path
+            pathParts.pop();
+            const folderPath = pathParts.join('/');
+            
+            // Get folder ID from our structure
+            const folderId = folderStructure[folderPath];
+            
+            console.log('📄 File:', file.name, '→ Folder:', folderPath, '→ ID:', folderId);
+            
+            addToUploadQueue(file, folderId, filePath);
         }
 
-        console.log('Added files to queue:', uploadQueue.length);
+        console.log('✅ Added', uploadQueue.length, 'files to queue');
 
         // Update UI and start processing
         updateUploadUI();
         processUploadQueue();
 
     } catch (error) {
-        console.error('Error handling folder upload:', error);
+        console.error('❌ Error handling folder upload:', error);
         showAlert('Failed to upload folder: ' + error.message, 'error');
     }
 
@@ -125,10 +129,85 @@ async function handleFolderSelect(event) {
 }
 
 // ============================================
+// BUILD FOLDER TREE FROM FILES
+// ============================================
+
+function buildFolderTree(files) {
+    const tree = {};
+    
+    for (let i = 0; i < files.length; i++) {
+        const filePath = files[i].webkitRelativePath || files[i].name;
+        const pathParts = filePath.split('/');
+        
+        // Remove filename
+        pathParts.pop();
+        
+        // Build nested structure
+        let currentPath = '';
+        pathParts.forEach((folderName, index) => {
+            const parentPath = currentPath;
+            currentPath = currentPath ? currentPath + '/' + folderName : folderName;
+            
+            if (!tree[currentPath]) {
+                tree[currentPath] = {
+                    name: folderName,
+                    path: currentPath,
+                    parentPath: parentPath || null,
+                    level: index,
+                    id: null
+                };
+            }
+        });
+    }
+    
+    return tree;
+}
+
+// ============================================
+// CREATE FOLDER STRUCTURE RECURSIVELY
+// ============================================
+
+async function createFolderStructure(folderTree, rootParentId) {
+    folderStructure = {}; // Reset
+    
+    // Sort folders by level (create parent folders first)
+    const sortedFolders = Object.values(folderTree).sort((a, b) => a.level - b.level);
+    
+    console.log('📁 Creating', sortedFolders.length, 'folders...');
+    
+    for (const folder of sortedFolders) {
+        try {
+            // Determine parent ID
+            let parentId = rootParentId;
+            if (folder.parentPath) {
+                parentId = folderStructure[folder.parentPath];
+            }
+            
+            console.log('📂 Creating folder:', folder.name, 'Parent ID:', parentId);
+            
+            // Create or find folder
+            const folderId = await createFolderForUpload(folder.name, parentId);
+            
+            if (folderId) {
+                folderStructure[folder.path] = folderId;
+                console.log('✅ Created/Found:', folder.path, '→ ID:', folderId);
+            } else {
+                console.error('❌ Failed to create folder:', folder.path);
+            }
+            
+        } catch (error) {
+            console.error('❌ Error creating folder:', folder.path, error);
+        }
+    }
+    
+    console.log('✅ Folder structure created:', folderStructure);
+}
+
+// ============================================
 // CREATE FOLDER FOR UPLOAD
 // ============================================
 
-async function createFolderForUpload(folderName) {
+async function createFolderForUpload(folderName, parentId = null) {
     try {
         const token = localStorage.getItem('token');
         const apiBase = getApiBase();
@@ -141,26 +220,26 @@ async function createFolderForUpload(folderName) {
             },
             body: JSON.stringify({
                 name: folderName,
-                parent_id: typeof currentFolderId !== 'undefined' ? currentFolderId : null
+                parent_id: parentId
             })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            console.log('Folder created:', data.folder);
+            console.log('✅ Folder created:', data.folder.name, '→ ID:', data.folder.id);
             return data.folder.id;
         } else {
             // If folder already exists, try to find it
             if (data.message && data.message.includes('already exists')) {
-                console.log('Folder already exists, finding it...');
-                return await findExistingFolder(folderName);
+                console.log('⚠️ Folder already exists, finding it...');
+                return await findExistingFolder(folderName, parentId);
             }
-            console.error('Failed to create folder:', data.message);
+            console.error('❌ Failed to create folder:', data.message);
             return null;
         }
     } catch (error) {
-        console.error('Error creating folder:', error);
+        console.error('❌ Error creating folder:', error);
         return null;
     }
 }
@@ -169,12 +248,11 @@ async function createFolderForUpload(folderName) {
 // FIND EXISTING FOLDER
 // ============================================
 
-async function findExistingFolder(folderName) {
+async function findExistingFolder(folderName, parentId = null) {
     try {
         const token = localStorage.getItem('token');
         const apiBase = getApiBase();
 
-        const parentId = typeof currentFolderId !== 'undefined' ? currentFolderId : null;
         const url = parentId 
             ? `${apiBase}/api/folders?parent_id=${parentId}`
             : `${apiBase}/api/folders`;
@@ -188,14 +266,14 @@ async function findExistingFolder(folderName) {
         if (data.success && data.folders) {
             const folder = data.folders.find(f => f.name === folderName);
             if (folder) {
-                console.log('Found existing folder:', folder.id);
+                console.log('✅ Found existing folder:', folder.name, '→ ID:', folder.id);
                 return folder.id;
             }
         }
 
         return null;
     } catch (error) {
-        console.error('Error finding folder:', error);
+        console.error('❌ Error finding folder:', error);
         return null;
     }
 }
@@ -204,11 +282,12 @@ async function findExistingFolder(folderName) {
 // UPLOAD QUEUE MANAGEMENT
 // ============================================
 
-function addToUploadQueue(file, folderId) {
+function addToUploadQueue(file, folderId, relativePath) {
     const uploadItem = {
         id: generateUploadId(),
         file: file,
         name: file.name,
+        relativePath: relativePath || file.name,
         size: file.size,
         progress: 0,
         status: 'pending', // pending, uploading, completed, failed, paused
@@ -218,7 +297,7 @@ function addToUploadQueue(file, folderId) {
     };
 
     uploadQueue.push(uploadItem);
-    console.log('Added to queue:', file.name, 'Folder ID:', folderId);
+    console.log('➕ Added to queue:', file.name, '→ Folder ID:', folderId);
 }
 
 function generateUploadId() {
@@ -231,13 +310,13 @@ function generateUploadId() {
 
 async function processUploadQueue() {
     if (isUploading) {
-        console.log('Already uploading, waiting...');
+        console.log('⏳ Already uploading, waiting...');
         return;
     }
 
     const pendingUpload = uploadQueue.find(item => item.status === 'pending');
     if (!pendingUpload) {
-        console.log('No pending uploads');
+        console.log('✅ No pending uploads');
         
         // Check if all uploads completed
         const allCompleted = uploadQueue.every(item => 
@@ -245,7 +324,18 @@ async function processUploadQueue() {
         );
         
         if (allCompleted && uploadQueue.length > 0) {
-            console.log('All uploads finished!');
+            console.log('🎉 All uploads finished!');
+            
+            // Show success message
+            const completed = uploadQueue.filter(i => i.status === 'completed').length;
+            const failed = uploadQueue.filter(i => i.status === 'failed').length;
+            
+            if (failed === 0) {
+                showAlert(`Successfully uploaded ${completed} files!`, 'success');
+            } else {
+                showAlert(`Uploaded ${completed} files, ${failed} failed`, 'warning');
+            }
+            
             // Refresh file list after all uploads
             setTimeout(() => {
                 if (typeof loadFilesAndFolders === 'function') {
@@ -264,9 +354,9 @@ async function processUploadQueue() {
         await uploadFile(pendingUpload);
         pendingUpload.status = 'completed';
         pendingUpload.progress = 100;
-        console.log('Upload completed:', pendingUpload.name);
+        console.log('✅ Upload completed:', pendingUpload.name);
     } catch (error) {
-        console.error('Upload failed:', pendingUpload.name, error);
+        console.error('❌ Upload failed:', pendingUpload.name, error);
         pendingUpload.status = 'failed';
         pendingUpload.error = error.message;
     }
@@ -313,7 +403,7 @@ function uploadFile(uploadItem) {
                 try {
                     const response = JSON.parse(xhr.responseText);
                     if (response.success) {
-                        console.log('Upload success:', uploadItem.name);
+                        console.log('✅ Upload success:', uploadItem.name);
                         
                         // Update storage info
                         if (response.storage) {
@@ -385,7 +475,7 @@ function updateStorageDisplay(storage) {
     if (storageBarLargeEl) storageBarLargeEl.style.width = percentage + '%';
 
     // Update localStorage user
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (user) {
         user.storage_used = used;
         localStorage.setItem('user', JSON.stringify(user));
@@ -414,6 +504,9 @@ function closeUploadModal() {
     uploadQueue = uploadQueue.filter(item => 
         item.status !== 'completed' && item.status !== 'failed'
     );
+
+    // Clear folder structure
+    folderStructure = {};
 
     // Refresh file list
     if (typeof loadFilesAndFolders === 'function') {
@@ -455,16 +548,22 @@ function updateUploadUI() {
 
     uploadQueue.forEach(item => {
         const statusIcon = getStatusIcon(item.status);
-        const statusColor = getStatusColor(item.status);
         const progressColor = item.status === 'completed' ? '#10b981' : 
                              item.status === 'failed' ? '#ef4444' : '#6366f1';
+
+        // Show relative path if it exists
+        const displayName = item.relativePath || item.name;
+        const isNested = displayName.includes('/');
 
         html += `
             <div class="upload-item" style="display: flex; align-items: center; gap: 12px; padding: 14px; background: #f9fafb; border-radius: 12px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
                 <div style="font-size: 28px;">${getFileIcon(item.name)}</div>
                 <div style="flex: 1; min-width: 0;">
-                    <div style="font-weight: 600; font-size: 14px; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</div>
+                    <div style="font-weight: 600; font-size: 14px; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${displayName}">
+                        ${isNested ? '📂 ' : ''}${displayName}
+                    </div>
                     <div style="font-size: 12px; color: #6b7280;">${formatFileSize(item.size)}</div>
+                    ${item.error ? `<div style="font-size: 11px; color: #ef4444; margin-top: 2px;">❌ ${item.error}</div>` : ''}
                 </div>
                 <div style="width: 120px;">
                     <div style="height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
@@ -506,17 +605,6 @@ function getStatusIcon(status) {
         case 'failed': return '❌';
         case 'paused': return '⏸️';
         default: return '❓';
-    }
-}
-
-function getStatusColor(status) {
-    switch (status) {
-        case 'pending': return '#f59e0b';
-        case 'uploading': return '#6366f1';
-        case 'completed': return '#10b981';
-        case 'failed': return '#ef4444';
-        case 'paused': return '#6b7280';
-        default: return '#6b7280';
     }
 }
 
@@ -589,6 +677,7 @@ function cancelAllUploads() {
         }
     });
     uploadQueue = [];
+    folderStructure = {};
     isUploading = false;
     updateUploadUI();
     closeUploadModal();
@@ -604,73 +693,14 @@ function getFileIcon(filename) {
     const ext = filename.split('.').pop().toLowerCase();
     
     const iconMap = {
-        // Documents
-        'pdf': '📕',
-        'doc': '📘',
-        'docx': '📘',
-        'txt': '📝',
-        'rtf': '📝',
-        
-        // Spreadsheets
-        'xls': '📊',
-        'xlsx': '📊',
-        'csv': '📊',
-        
-        // Presentations
-        'ppt': '📙',
-        'pptx': '📙',
-        
-        // Images
-        'jpg': '🖼️',
-        'jpeg': '🖼️',
-        'png': '🖼️',
-        'gif': '🎞️',
-        'bmp': '🖼️',
-        'svg': '🎨',
-        'webp': '🖼️',
-        'ico': '🖼️',
-        
-        // Videos
-        'mp4': '🎬',
-        'avi': '🎬',
-        'mov': '🎬',
-        'wmv': '🎬',
-        'mkv': '🎬',
-        'webm': '🎬',
-        'flv': '🎬',
-        
-        // Audio
-        'mp3': '🎵',
-        'wav': '🎵',
-        'ogg': '🎵',
-        'flac': '🎵',
-        'aac': '🎵',
-        
-        // Archives
-        'zip': '📦',
-        'rar': '📦',
-        '7z': '📦',
-        'tar': '📦',
-        'gz': '📦',
-        
-        // Code
-        'html': '💻',
-        'css': '🎨',
-        'js': '⚡',
-        'json': '📋',
-        'xml': '📋',
-        'php': '🐘',
-        'py': '🐍',
-        'java': '☕',
-        'c': '💻',
-        'cpp': '💻',
-        'h': '💻',
-        
-        // Others
-        'exe': '⚙️',
-        'dll': '⚙️',
-        'apk': '📱',
-        'iso': '💿'
+        'pdf': '📕', 'doc': '📘', 'docx': '📘', 'txt': '📝',
+        'xls': '📊', 'xlsx': '📊', 'csv': '📊',
+        'ppt': '📙', 'pptx': '📙',
+        'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🎞️', 'svg': '🎨',
+        'mp4': '🎬', 'avi': '🎬', 'mov': '🎬', 'mkv': '🎬',
+        'mp3': '🎵', 'wav': '🎵', 'ogg': '🎵',
+        'zip': '📦', 'rar': '📦', '7z': '📦',
+        'html': '💻', 'css': '🎨', 'js': '⚡', 'json': '📋', 'py': '🐍'
     };
     
     return iconMap[ext] || '📄';
@@ -678,11 +708,9 @@ function getFileIcon(filename) {
 
 function formatFileSize(bytes) {
     if (!bytes || bytes === 0) return '0 Bytes';
-    
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
@@ -694,7 +722,6 @@ function setupDragAndDrop() {
     const fileArea = document.querySelector('.file-area');
     if (!fileArea) return;
 
-    // Create drop overlay
     let dropOverlay = document.getElementById('dropOverlay');
     if (!dropOverlay) {
         dropOverlay = document.createElement('div');
@@ -707,14 +734,9 @@ function setupDragAndDrop() {
             </div>
         `;
         dropOverlay.style.cssText = `
-            position: fixed;
-            inset: 0;
-            background: rgba(99, 102, 241, 0.95);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            color: white;
+            position: fixed; inset: 0; background: rgba(99, 102, 241, 0.95);
+            display: none; align-items: center; justify-content: center;
+            z-index: 9999; color: white;
         `;
         document.body.appendChild(dropOverlay);
     }
@@ -747,7 +769,7 @@ function setupDragAndDrop() {
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             for (let i = 0; i < files.length; i++) {
-                addToUploadQueue(files[i], null);
+                addToUploadQueue(files[i], null, null);
             }
             showUploadModal();
             processUploadQueue();
@@ -755,11 +777,10 @@ function setupDragAndDrop() {
     });
 }
 
-// Initialize drag & drop
 document.addEventListener('DOMContentLoaded', setupDragAndDrop);
 
 // ============================================
-// SHOW ALERT (if not defined elsewhere)
+// SHOW ALERT
 // ============================================
 
 if (typeof showAlert !== 'function') {
@@ -769,37 +790,32 @@ if (typeof showAlert !== 'function') {
         if (!alertContainer) {
             alertContainer = document.createElement('div');
             alertContainer.id = 'alertContainer';
-            alertContainer.style.cssText = `
-                position: fixed;
-                top: 80px;
-                right: 20px;
-                z-index: 10000;
-            `;
+            alertContainer.style.cssText = `position: fixed; top: 80px; right: 20px; z-index: 10000;`;
             document.body.appendChild(alertContainer);
         }
         
         const alert = document.createElement('div');
+        const colors = {
+            success: '#10b981',
+            error: '#ef4444',
+            warning: '#f59e0b'
+        };
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️'
+        };
+        
         alert.style.cssText = `
-            padding: 15px 20px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#f59e0b'};
-            color: white;
+            padding: 15px 20px; margin-bottom: 10px; border-radius: 10px;
+            background: ${colors[type] || colors.success}; color: white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: flex; align-items: center; gap: 10px;
             animation: slideIn 0.3s ease;
         `;
-        alert.innerHTML = `
-            <span style="font-size: 20px;">${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}</span>
-            <span>${message}</span>
-        `;
+        alert.innerHTML = `<span style="font-size: 20px;">${icons[type] || icons.success}</span><span>${message}</span>`;
         
         alertContainer.appendChild(alert);
-        
-        setTimeout(() => {
-            alert.remove();
-        }, 4000);
+        setTimeout(() => alert.remove(), 4000);
     }
 }
