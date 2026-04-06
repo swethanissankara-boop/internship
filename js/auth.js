@@ -18,17 +18,20 @@ const getAPIUrl = () => {
 
 const API_URL = getAPIUrl();
 console.log('[CloudShare Auth] API URL:', API_URL);
+/* ============================================
+   CLOUDSHARE - AUTHENTICATION
+   Uses functions from utils.js
+   ============================================ */
 
 // ============================================
 // INITIALIZE PAGES
 // ============================================
 
-// Initialize Register Page
 function initializeRegisterPage() {
-    log('Initializing register page');
+    console.log('[Auth] Initializing register page');
 
     if (isLoggedIn()) {
-        window.location.href = '/dashboard.html';
+        window.location.href = 'dashboard.html';
         return;
     }
 
@@ -38,12 +41,11 @@ function initializeRegisterPage() {
     setupPasswordToggles();
 }
 
-// Initialize Login Page
 function initializeLoginPage() {
-    log('Initializing login page');
+    console.log('[Auth] Initializing login page');
 
     if (isLoggedIn()) {
-        window.location.href = '/dashboard.html';
+        window.location.href = 'dashboard.html';
         return;
     }
 
@@ -53,7 +55,6 @@ function initializeLoginPage() {
     setupPasswordToggles();
 }
 
-// Setup password toggle buttons
 function setupPasswordToggles() {
     const toggleButtons = document.querySelectorAll('.toggle-password');
     toggleButtons.forEach(button => {
@@ -79,7 +80,7 @@ function setupPasswordToggles() {
 
 async function handleRegister(event) {
     event.preventDefault();
-    log('Handling registration...');
+    console.log('[Auth] Handling registration...');
 
     const name = document.getElementById('name')?.value.trim() || document.getElementById('username')?.value.trim();
     const email = document.getElementById('email').value.trim();
@@ -87,38 +88,37 @@ async function handleRegister(event) {
     const confirmPassword = document.getElementById('confirmPassword').value;
     const terms = document.getElementById('terms')?.checked || false;
 
-    if (!name) return showError('Please enter your name', 'alertMessage');
-    if (!isValidEmail(email)) return showError('Please enter a valid email', 'alertMessage');
-    if (!isValidPassword(password)) return showError('Password must be at least 8 characters', 'alertMessage');
-    if (password !== confirmPassword) return showError('Passwords do not match', 'alertMessage');
-    if (!terms) return showError('Please accept the Terms & Conditions', 'alertMessage');
+    // Validation
+    if (!name) return showAuthError('Please enter your name');
+    if (!email || !isValidEmail(email)) return showAuthError('Please enter a valid email');
+    if (!password || password.length < 8) return showAuthError('Password must be at least 8 characters');
+    if (password !== confirmPassword) return showAuthError('Passwords do not match');
+    if (!terms) return showAuthError('Please accept the Terms & Conditions');
 
-    setButtonLoading('registerBtn', true, 'Creating Account...');
+    setAuthButtonLoading('registerBtn', true, 'Creating Account...');
 
     try {
-        const response = await fetch(`${API_URL}/auth/register`, {
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ name: name, email, password })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
         });
 
         const data = await response.json();
-        log('Registration response:', data);
+        console.log('[Auth] Registration response:', data);
 
         if (data.success) {
             saveAuthData(data.token, data.user);
-            showSuccess('Account created successfully! Redirecting...', 'alertMessage');
-            setTimeout(() => window.location.href = '/dashboard.html', 1500);
+            showAuthSuccess('Account created successfully! Redirecting...');
+            setTimeout(() => window.location.href = 'dashboard.html', 1500);
         } else {
-            showError(data.message || 'Registration failed', 'alertMessage');
+            showAuthError(data.message || 'Registration failed');
         }
     } catch (error) {
-        logError('Registration error', error);
-        showError(error.message || 'Registration failed. Try again.', 'alertMessage');
+        console.error('[Auth] Registration error:', error);
+        showAuthError('Cannot reach server. Please try again later.');
     } finally {
-        setButtonLoading('registerBtn', false, 'Create Account');
+        setAuthButtonLoading('registerBtn', false, 'Create Account');
     }
 }
 
@@ -128,52 +128,40 @@ async function handleRegister(event) {
 
 async function handleLogin(event) {
     event.preventDefault();
-    log('Handling login...');
+    console.log('[Auth] Handling login...');
 
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const remember = document.getElementById('remember')?.checked || false;
 
-    if (!isValidEmail(email)) return showError('Please enter a valid email', 'alertMessage');
-    if (!password) return showError('Please enter your password', 'alertMessage');
+    // Validation
+    if (!email || !isValidEmail(email)) return showAuthError('Please enter a valid email');
+    if (!password) return showAuthError('Please enter your password');
 
-    setButtonLoading('loginBtn', true, 'Logging in...');
+    setAuthButtonLoading('loginBtn', true, 'Logging in...');
 
     try {
-        const response = await fetch(`${API_URL}/auth/login`, {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
 
         const data = await response.json();
-        log('Login response:', data);
+        console.log('[Auth] Login response:', data);
 
         if (data.success) {
             saveAuthData(data.token, data.user);
-            showSuccess('Login successful! Redirecting...', 'alertMessage');
-            setTimeout(() => window.location.href = '/dashboard.html', 1000);
+            showAuthSuccess('Login successful! Redirecting...');
+            setTimeout(() => window.location.href = 'dashboard.html', 1000);
         } else {
-            showError(data.message || 'Invalid email or password', 'alertMessage');
+            showAuthError(data.message || 'Invalid email or password');
         }
     } catch (error) {
-        logError('Login error', error);
-        showError('Cannot reach server. Please try again later.', 'alertMessage');
+        console.error('[Auth] Login error:', error);
+        showAuthError('Cannot reach server. Please try again later.');
     } finally {
-        setButtonLoading('loginBtn', false, 'Login');
+        setAuthButtonLoading('loginBtn', false, 'Login');
     }
-}
-
-// ============================================
-// LOGOUT
-// ============================================
-
-function logout() {
-    log('Logging out...');
-    clearAuthData();
-    window.location.href = '/login.html';
 }
 
 // ============================================
@@ -186,53 +174,12 @@ function togglePassword(inputId) {
 }
 
 // ============================================
-// VALIDATION HELPERS
+// AUTH-SPECIFIC UI HELPERS
+// (Named differently to avoid conflict with utils.js)
 // ============================================
 
-function isValidEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-}
-
-function isValidPassword(password) {
-    return password && password.length >= 8;
-}
-
-// ============================================
-// AUTH DATA MANAGEMENT
-// ============================================
-
-function saveAuthData(token, user) {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    log('Auth data saved');
-}
-
-function clearAuthData() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    log('Auth data cleared');
-}
-
-function isLoggedIn() {
-    return !!localStorage.getItem('token');
-}
-
-function getAuthToken() {
-    return localStorage.getItem('token');
-}
-
-function getCurrentUser() {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
-}
-
-// ============================================
-// UI HELPERS
-// ============================================
-
-function showError(message, elementId = 'alertMessage') {
-    const alertDiv = document.getElementById(elementId);
+function showAuthError(message) {
+    const alertDiv = document.getElementById('alertMessage');
     if (!alertDiv) {
         alert(message);
         return;
@@ -247,8 +194,8 @@ function showError(message, elementId = 'alertMessage') {
     setTimeout(() => alertDiv.style.display = 'none', 5000);
 }
 
-function showSuccess(message, elementId = 'alertMessage') {
-    const alertDiv = document.getElementById(elementId);
+function showAuthSuccess(message) {
+    const alertDiv = document.getElementById('alertMessage');
     if (!alertDiv) {
         alert(message);
         return;
@@ -263,7 +210,7 @@ function showSuccess(message, elementId = 'alertMessage') {
     setTimeout(() => alertDiv.style.display = 'none', 5000);
 }
 
-function setButtonLoading(buttonId, isLoading, text) {
+function setAuthButtonLoading(buttonId, isLoading, text) {
     const button = document.getElementById(buttonId);
     if (!button) return;
     
@@ -273,18 +220,6 @@ function setButtonLoading(buttonId, isLoading, text) {
     } else {
         button.textContent = text;
     }
-}
-
-// ============================================
-// LOGGING
-// ============================================
-
-function log(...args) {
-    console.log('[CloudShare Auth]', ...args);
-}
-
-function logError(...args) {
-    console.error('[CloudShare Auth Error]', ...args);
 }
 
 // ============================================
@@ -300,3 +235,5 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeLoginPage();
     }
 });
+
+console.log('[Auth] Auth module loaded. API URL:', API_BASE_URL);
