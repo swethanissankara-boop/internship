@@ -1,5 +1,5 @@
 /* ============================================
-   CLOUDSHARE - TRASH OPERATIONS
+   CLOUDSHARE - TRASH OPERATIONS (FIXED)
    ============================================ */
 
 // ============================================
@@ -9,51 +9,108 @@
 let trashItems = [];
 let selectedTrashItems = [];
 let deleteTargetId = null;
+let deleteTargetType = null;
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('[Trash] Page loaded');
+    
+    // Check authentication
+    if (!checkAuth()) {
+        return;
+    }
+    
+    // Load user info in navbar
+    loadUserInfo();
+    
+    // Load trash items
+    await loadTrashItems();
+    
+    // Setup event listeners
+    setupTrashEventListeners();
+});
+
+function setupTrashEventListeners() {
+    // Select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', (e) => {
+            const checkboxes = document.querySelectorAll('.trash-item-checkbox');
+            checkboxes.forEach(cb => cb.checked = e.target.checked);
+            updateTrashSelection();
+        });
+    }
+    
+    // Close modal on click outside
+    const modal = document.getElementById('confirmDeleteModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeConfirmModal();
+            }
+        });
+    }
+}
 
 // ============================================
 // LOAD TRASH ITEMS
 // ============================================
 
 async function loadTrashItems() {
-    log('Loading trash items...');
+    console.log('[Trash] Loading trash items...');
+    
+    const loadingEl = document.getElementById('loadingSpinner');
+    const containerEl = document.getElementById('trashContainer');
+    const emptyEl = document.getElementById('emptyState');
     
     try {
-        // In real app, call API
-        // const response = await apiGet('/trash');
+        // Show loading
+        if (loadingEl) loadingEl.style.display = 'flex';
+        if (containerEl) containerEl.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'none';
         
-        // Demo data
-        trashItems = [
-            {
-                id: 1,
-                type: 'folder',
-                name: 'Old Projects',
-                size: 134217728,
-                items_count: 25,
-                deleted_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-                auto_delete_in: 25
-            },
-            {
-                id: 2,
-                type: 'file',
-                name: 'old_report.pdf',
-                size: 2415919,
-                deleted_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-                auto_delete_in: 15
-            },
-            {
-                id: 3,
-                type: 'file',
-                name: 'vacation.jpg',
-                size: 1572864,
-                deleted_at: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
-                auto_delete_in: 2
+        // Get trash items from API
+        const response = await apiGet('/files/trash/items');
+        
+        console.log('[Trash] API Response:', response);
+        
+        if (response.success) {
+            // Handle both direct array and nested array from stored procedure
+            if (Array.isArray(response.items)) {
+                trashItems = response.items;
+            } else if (Array.isArray(response.items?.[0])) {
+                trashItems = response.items[0];
+            } else {
+                trashItems = [];
             }
-        ];
-        
-        renderTrashItems();
+            
+            console.log('[Trash] Loaded items:', trashItems.length);
+            renderTrashItems();
+        } else {
+            throw new Error(response.message || 'Failed to load trash items');
+        }
         
     } catch (error) {
-        logError('Error loading trash:', error);
+        console.error('[Trash] Error loading:', error);
+        showNotification('Failed to load trash items: ' + error.message, 'error');
+        
+        // Show error state
+        if (containerEl) {
+            containerEl.innerHTML = `
+                <div class="error-state">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Error Loading Trash</h3>
+                    <p>${error.message}</p>
+                    <button class="btn btn-primary" onclick="loadTrashItems()">Try Again</button>
+                </div>
+            `;
+            containerEl.style.display = 'block';
+        }
+    } finally {
+        if (loadingEl) loadingEl.style.display = 'none';
     }
 }
 
@@ -62,137 +119,229 @@ async function loadTrashItems() {
 // ============================================
 
 function renderTrashItems() {
-    const container = document.getElementById('trashContainer');
-    if (!container) return;
+    const containerEl = document.getElementById('trashContainer');
+    const emptyEl = document.getElementById('emptyState');
+    const bulkActionsEl = document.getElementById('bulkActionsBar');
+    const emptyTrashBtn = document.getElementById('emptyTrashBtn');
     
-    if (trashItems.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state" id="emptyState">
-                <div class="empty-icon">🗑️</div>
-                <h3>Trash is empty</h3>
-                <p>Items you delete will appear here for 30 days</p>
-            </div>
-        `;
+    // Handle empty state
+    if (!trashItems || trashItems.length === 0) {
+        if (containerEl) containerEl.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'flex';
+        if (bulkActionsEl) bulkActionsEl.style.display = 'none';
+        if (emptyTrashBtn) emptyTrashBtn.disabled = true;
+        updateTrashStats();
         return;
     }
     
+    // Show container, hide empty state
+    if (containerEl) containerEl.style.display = 'block';
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (bulkActionsEl) bulkActionsEl.style.display = 'flex';
+    if (emptyTrashBtn) emptyTrashBtn.disabled = false;
+    
+    // Render items
     let html = '';
     
     trashItems.forEach(item => {
-        const isExpiringSoon = item.auto_delete_in <= 3;
-        const icon = item.type === 'folder' ? '📁' : getFileIcon(item.name);
+        const daysLeft = item.days_until_deletion || 30;
+        const isExpiringSoon = daysLeft <= 3;
+        const icon = item.item_type === 'folder' ? '📁' : getFileIcon(item.original_name || 'file');
         const deletedDate = formatDate(item.deleted_at);
+        const size = item.size ? formatFileSize(item.size) : '0 B';
+        const itemName = item.original_name || 'Unknown';
         
         html += `
-            <div class="trash-card ${isExpiringSoon ? 'expiring-soon' : ''}" data-id="${item.id}">
-                <div class="trash-checkbox">
-                    <input type="checkbox" onchange="updateTrashSelection()">
+            <div class="trash-item ${isExpiringSoon ? 'expiring-soon' : ''}" data-trash-id="${item.trash_id}" data-item-type="${item.item_type}">
+                <div class="trash-item-select">
+                    <input type="checkbox" class="trash-item-checkbox" onchange="updateTrashSelection()">
                 </div>
-                <div class="trash-icon">${icon}</div>
-                <div class="trash-content">
-                    <h4 class="trash-name">${item.name}</h4>
-                    <p class="trash-meta">
-                        Deleted: ${deletedDate} • 
-                        ${item.type === 'folder' ? item.items_count + ' items • ' : ''}
-                        ${formatFileSize(item.size)}
-                    </p>
-                    <p class="trash-expiry ${isExpiringSoon ? 'warning' : ''}">
-                        ${isExpiringSoon ? '⚠️ ' : ''}Auto-delete in: 
-                        <span class="expiry-days">${item.auto_delete_in} days</span>
-                    </p>
+                
+                <div class="trash-item-icon">${icon}</div>
+                
+                <div class="trash-item-info">
+                    <div class="trash-item-name" title="${escapeHtml(itemName)}">${escapeHtml(itemName)}</div>
+                    <div class="trash-item-meta">
+                        <span class="meta-type">${item.item_type === 'folder' ? '📂 Folder' : '📄 File'}</span>
+                        <span class="meta-separator">•</span>
+                        <span class="meta-size">${size}</span>
+                        <span class="meta-separator">•</span>
+                        <span class="meta-date">Deleted ${deletedDate}</span>
+                    </div>
+                    <div class="trash-item-expiry ${isExpiringSoon ? 'expiry-warning' : ''}">
+                        ${isExpiringSoon ? '⚠️' : '⏰'} 
+                        Auto-delete in <strong>${daysLeft}</strong> day${daysLeft !== 1 ? 's' : ''}
+                    </div>
                 </div>
-                <div class="trash-actions">
-                    <button class="btn btn-sm" onclick="restoreItem(${item.id})">
-                        ↩️ Restore
+                
+                <div class="trash-item-actions">
+                    <button class="btn btn-success btn-sm" onclick="restoreItem(${item.trash_id}, '${item.item_type}')" title="Restore">
+                        <span class="btn-icon">↩️</span>
+                        <span class="btn-label">Restore</span>
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteForever(${item.id})">
-                        🗑️ Delete Forever
+                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteItem(${item.trash_id}, '${item.item_type}', '${escapeHtml(itemName)}')" title="Delete Forever">
+                        <span class="btn-icon">🗑️</span>
+                        <span class="btn-label">Delete</span>
                     </button>
                 </div>
             </div>
         `;
     });
     
-    container.innerHTML = html;
+    containerEl.innerHTML = html;
     
-    // Update trash size
-    updateTrashSize();
+    // Update statistics
+    updateTrashStats();
 }
 
 // ============================================
-// UPDATE TRASH SIZE
+// UPDATE TRASH STATISTICS
 // ============================================
 
-function updateTrashSize() {
-    const totalSize = trashItems.reduce((sum, item) => sum + item.size, 0);
+function updateTrashStats() {
+    const totalItems = trashItems.length;
+    const totalSize = trashItems.reduce((sum, item) => sum + (parseInt(item.size) || 0), 0);
+    const totalFiles = trashItems.filter(item => item.item_type === 'file').length;
+    const totalFolders = trashItems.filter(item => item.item_type === 'folder').length;
+    const expiringSoon = trashItems.filter(item => (item.days_until_deletion || 30) <= 3).length;
+    
+    // Update elements
     const trashSizeEl = document.getElementById('trashSize');
+    const itemCountEl = document.getElementById('trashItemCount');
+    const expiringWarningEl = document.getElementById('expiringWarning');
+    
     if (trashSizeEl) {
         trashSizeEl.textContent = formatFileSize(totalSize);
+    }
+    
+    if (itemCountEl) {
+        let countText = [];
+        if (totalFiles > 0) countText.push(`${totalFiles} file${totalFiles > 1 ? 's' : ''}`);
+        if (totalFolders > 0) countText.push(`${totalFolders} folder${totalFolders > 1 ? 's' : ''}`);
+        itemCountEl.textContent = countText.length > 0 ? countText.join(', ') : 'No items';
+    }
+    
+    if (expiringWarningEl) {
+        if (expiringSoon > 0) {
+            expiringWarningEl.innerHTML = `⚠️ <strong>${expiringSoon}</strong> item${expiringSoon > 1 ? 's' : ''} will be permanently deleted within 3 days`;
+            expiringWarningEl.style.display = 'flex';
+        } else {
+            expiringWarningEl.style.display = 'none';
+        }
     }
 }
 
 // ============================================
-// SELECTION
+// SELECTION HANDLING
 // ============================================
 
 function updateTrashSelection() {
-    const checkboxes = document.querySelectorAll('.trash-card input[type="checkbox"]:checked');
+    const checkboxes = document.querySelectorAll('.trash-item-checkbox:checked');
     selectedTrashItems = Array.from(checkboxes).map(cb => {
-        return parseInt(cb.closest('.trash-card').dataset.id);
+        const card = cb.closest('.trash-item');
+        return {
+            trash_id: parseInt(card.dataset.trashId),
+            item_type: card.dataset.itemType
+        };
     });
+    
+    const hasSelection = selectedTrashItems.length > 0;
+    const totalItems = document.querySelectorAll('.trash-item-checkbox').length;
     
     // Update buttons
     const restoreBtn = document.getElementById('restoreSelectedBtn');
     const deleteBtn = document.getElementById('deleteSelectedBtn');
     
-    if (restoreBtn) restoreBtn.disabled = selectedTrashItems.length === 0;
-    if (deleteBtn) deleteBtn.disabled = selectedTrashItems.length === 0;
+    if (restoreBtn) {
+        restoreBtn.disabled = !hasSelection;
+        restoreBtn.innerHTML = hasSelection 
+            ? `↩️ Restore (${selectedTrashItems.length})`
+            : '↩️ Restore Selected';
+    }
+    
+    if (deleteBtn) {
+        deleteBtn.disabled = !hasSelection;
+        deleteBtn.innerHTML = hasSelection 
+            ? `🗑️ Delete (${selectedTrashItems.length})`
+            : '🗑️ Delete Selected';
+    }
+    
+    // Update select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = totalItems > 0 && checkboxes.length === totalItems;
+        selectAllCheckbox.indeterminate = checkboxes.length > 0 && checkboxes.length < totalItems;
+    }
 }
 
 // ============================================
 // RESTORE OPERATIONS
 // ============================================
 
-async function restoreItem(itemId) {
-    log('Restoring item:', itemId);
+async function restoreItem(trashId, itemType) {
+    console.log('[Trash] Restoring item:', trashId, itemType);
     
     try {
-        // In real app, call API
-        // await apiPost(`/trash/${itemId}/restore`);
+        showNotification('Restoring item...', 'info');
         
-        // Demo: Remove from trash
-        trashItems = trashItems.filter(item => item.id !== itemId);
-        renderTrashItems();
+        const response = await apiPost(`/files/trash/${trashId}/restore`);
         
-        alert('Item restored successfully!');
+        if (response.success) {
+            // Remove from local array
+            trashItems = trashItems.filter(item => item.trash_id !== trashId);
+            renderTrashItems();
+            showNotification('Item restored successfully!', 'success');
+        } else {
+            throw new Error(response.message || 'Failed to restore item');
+        }
         
     } catch (error) {
-        logError('Error restoring item:', error);
-        alert('Failed to restore item');
+        console.error('[Trash] Restore error:', error);
+        showNotification('Failed to restore: ' + error.message, 'error');
     }
 }
 
 async function restoreSelected() {
-    if (selectedTrashItems.length === 0) return;
+    if (selectedTrashItems.length === 0) {
+        showNotification('No items selected', 'warning');
+        return;
+    }
     
-    log('Restoring selected items:', selectedTrashItems);
+    console.log('[Trash] Restoring selected items:', selectedTrashItems.length);
     
     try {
-        // In real app, call API for each
-        // for (const id of selectedTrashItems) {
-        //     await apiPost(`/trash/${id}/restore`);
-        // }
+        showNotification(`Restoring ${selectedTrashItems.length} items...`, 'info');
         
-        // Demo: Remove from trash
-        trashItems = trashItems.filter(item => !selectedTrashItems.includes(item.id));
+        let restored = 0;
+        let failed = 0;
+        
+        for (const item of selectedTrashItems) {
+            try {
+                const response = await apiPost(`/files/trash/${item.trash_id}/restore`);
+                if (response.success) {
+                    restored++;
+                } else {
+                    failed++;
+                }
+            } catch (error) {
+                console.error('[Trash] Error restoring item:', error);
+                failed++;
+            }
+        }
+        
+        // Reload trash
         selectedTrashItems = [];
-        renderTrashItems();
+        await loadTrashItems();
         
-        alert('Selected items restored successfully!');
+        if (failed === 0) {
+            showNotification(`Successfully restored ${restored} items!`, 'success');
+        } else {
+            showNotification(`Restored ${restored}, failed ${failed}`, 'warning');
+        }
         
     } catch (error) {
-        logError('Error restoring items:', error);
-        alert('Failed to restore items');
+        console.error('[Trash] Restore selected error:', error);
+        showNotification('Failed to restore items', 'error');
     }
 }
 
@@ -200,96 +349,157 @@ async function restoreSelected() {
 // DELETE OPERATIONS
 // ============================================
 
-function deleteForever(itemId) {
-    deleteTargetId = itemId;
+function confirmDeleteItem(trashId, itemType, itemName) {
+    deleteTargetId = trashId;
+    deleteTargetType = itemType;
     
-    const item = trashItems.find(i => i.id === itemId);
-    const message = `Are you sure you want to permanently delete "${item?.name || 'this item'}"? This action cannot be undone.`;
+    const messageEl = document.getElementById('confirmMessage');
+    if (messageEl) {
+        messageEl.innerHTML = `
+            Are you sure you want to <strong>permanently delete</strong> 
+            "<strong>${itemName}</strong>"?<br><br>
+            <span style="color: #dc3545;">⚠️ This action cannot be undone!</span>
+        `;
+    }
     
-    document.getElementById('confirmMessage').textContent = message;
-    document.getElementById('confirmDeleteModal').style.display = 'flex';
+    const modal = document.getElementById('confirmDeleteModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
 
 function closeConfirmModal() {
-    document.getElementById('confirmDeleteModal').style.display = 'none';
+    const modal = document.getElementById('confirmDeleteModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
     deleteTargetId = null;
+    deleteTargetType = null;
 }
 
-async function confirmDelete() {
+async function confirmPermanentDelete() {
     if (!deleteTargetId) return;
     
-    log('Permanently deleting:', deleteTargetId);
+    console.log('[Trash] Permanently deleting:', deleteTargetId);
     
     try {
-        // In real app, call API
-        // await apiDelete(`/trash/${deleteTargetId}`);
+        showNotification('Deleting permanently...', 'info');
         
-        // Demo: Remove from trash
-        trashItems = trashItems.filter(item => item.id !== deleteTargetId);
-        renderTrashItems();
+        const response = await apiDelete(`/files/trash/${deleteTargetId}/permanent`);
         
-        closeConfirmModal();
-        alert('Item permanently deleted!');
+        if (response.success) {
+            trashItems = trashItems.filter(item => item.trash_id !== deleteTargetId);
+            renderTrashItems();
+            closeConfirmModal();
+            
+            const freedMsg = response.freed_space ? ` (freed ${formatFileSize(response.freed_space)})` : '';
+            showNotification('Item permanently deleted!' + freedMsg, 'success');
+        } else {
+            throw new Error(response.message || 'Failed to delete item');
+        }
         
     } catch (error) {
-        logError('Error deleting item:', error);
-        alert('Failed to delete item');
+        console.error('[Trash] Delete error:', error);
+        showNotification('Failed to delete: ' + error.message, 'error');
     }
 }
 
 async function deleteSelectedPermanently() {
-    if (selectedTrashItems.length === 0) return;
-    
-    if (!confirm(`Permanently delete ${selectedTrashItems.length} items? This cannot be undone.`)) {
+    if (selectedTrashItems.length === 0) {
+        showNotification('No items selected', 'warning');
         return;
     }
     
-    log('Permanently deleting selected:', selectedTrashItems);
+    const count = selectedTrashItems.length;
+    if (!confirm(`Permanently delete ${count} item${count > 1 ? 's' : ''}?\n\nThis cannot be undone!`)) {
+        return;
+    }
+    
+    console.log('[Trash] Deleting selected items:', count);
     
     try {
-        // In real app, call API for each
-        // for (const id of selectedTrashItems) {
-        //     await apiDelete(`/trash/${id}`);
-        // }
+        showNotification(`Deleting ${count} items...`, 'info');
         
-        // Demo: Remove from trash
-        trashItems = trashItems.filter(item => !selectedTrashItems.includes(item.id));
+        let deleted = 0;
+        let failed = 0;
+        let totalFreed = 0;
+        
+        for (const item of selectedTrashItems) {
+            try {
+                const response = await apiDelete(`/files/trash/${item.trash_id}/permanent`);
+                if (response.success) {
+                    deleted++;
+                    totalFreed += response.freed_space || 0;
+                } else {
+                    failed++;
+                }
+            } catch (error) {
+                console.error('[Trash] Error deleting item:', error);
+                failed++;
+            }
+        }
+        
+        // Reload trash
         selectedTrashItems = [];
-        renderTrashItems();
+        await loadTrashItems();
         
-        alert('Selected items permanently deleted!');
+        const freedMsg = totalFreed > 0 ? ` (freed ${formatFileSize(totalFreed)})` : '';
+        if (failed === 0) {
+            showNotification(`Deleted ${deleted} items!${freedMsg}`, 'success');
+        } else {
+            showNotification(`Deleted ${deleted}, failed ${failed}${freedMsg}`, 'warning');
+        }
         
     } catch (error) {
-        logError('Error deleting items:', error);
-        alert('Failed to delete items');
+        console.error('[Trash] Delete selected error:', error);
+        showNotification('Failed to delete items', 'error');
     }
 }
 
 async function emptyTrash() {
     if (trashItems.length === 0) {
-        alert('Trash is already empty');
+        showNotification('Trash is already empty', 'info');
         return;
     }
     
-    if (!confirm('Permanently delete all items in trash? This cannot be undone.')) {
+    const count = trashItems.length;
+    const totalSize = trashItems.reduce((sum, item) => sum + (parseInt(item.size) || 0), 0);
+    
+    if (!confirm(`Permanently delete ALL ${count} items in trash?\n\nTotal size: ${formatFileSize(totalSize)}\n\nThis cannot be undone!`)) {
         return;
     }
     
-    log('Emptying trash...');
+    console.log('[Trash] Emptying trash...');
     
     try {
-        // In real app, call API
-        // await apiDelete('/trash/empty');
+        showNotification('Emptying trash...', 'info');
         
-        // Demo: Clear all
-        trashItems = [];
-        selectedTrashItems = [];
-        renderTrashItems();
+        const response = await apiPost('/files/trash/empty');
         
-        alert('Trash emptied successfully!');
+        if (response.success) {
+            trashItems = [];
+            selectedTrashItems = [];
+            renderTrashItems();
+            
+            const freedMsg = response.freed_space ? ` (freed ${formatFileSize(response.freed_space)})` : '';
+            showNotification(`Trash emptied! Deleted ${response.deleted_count || count} items${freedMsg}`, 'success');
+        } else {
+            throw new Error(response.message || 'Failed to empty trash');
+        }
         
     } catch (error) {
-        logError('Error emptying trash:', error);
-        alert('Failed to empty trash');
+        console.error('[Trash] Empty trash error:', error);
+        showNotification('Failed to empty trash: ' + error.message, 'error');
     }
+}
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
