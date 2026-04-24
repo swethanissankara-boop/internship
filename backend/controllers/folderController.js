@@ -1,5 +1,5 @@
 /* ============================================
-   FOLDER CONTROLLER - UPDATED WITH STORAGE FIX
+   FOLDER CONTROLLER - WITH DUPLICATE HANDLING
    ============================================ */
 
 const archiver = require('archiver');
@@ -8,19 +8,146 @@ const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
 
+// ✅ NEW: Check if folder exists
+async function checkFolderExists(req, res) {
+    try {
+        const userId = req.user.id || req.user.userId;
+        const { name, parent_id } = req.query;
+
+        if (!name) {
+            return res.status(400).json({
+                success: false,
+                message: 'Folder name is required'
+            });
+        }
+
+        let sql = 'SELECT id, name, created_at FROM folders WHERE name = ? AND user_id = ? AND is_deleted = 0';
+        const params = [name, userId];
+
+        if (parent_id && parent_id !== 'null' && parent_id !== 'undefined') {
+            sql += ' AND parent_id = ?';
+            params.push(parent_id);
+        } else {
+            sql += ' AND parent_id IS NULL';
+        }
+
+        const existingFolder = await queryOne(sql, params);
+
+        res.json({
+            success: true,
+            exists: !!existingFolder,
+            existing_folder: existingFolder || null
+        });
+
+    } catch (error) {
+        console.error('Check folder exists error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to check folder'
+        });
+    }
+}
+
+// ✅ NEW: Delete folder completely (for replace)
+async function deleteFolderCompletely(req, res) {
+    try {
+        const userId = req.user.id || req.user.userId;
+        const folderId = req.params.id;
+
+        console.log('🗑️ Deleting folder completely:', folderId);
+
+        // Get folder
+        const folder = await queryOne(
+            'SELECT * FROM folders WHERE id = ? AND user_id = ? AND is_deleted = 0',
+            [folderId, userId]
+        );
+
+        if (!folder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Folder not found'
+            });
+        }
+
+        // Get all files in folder and subfolders
+        const allFolderIds = await getAllSubfolderIds(folderId, userId);
+        allFolderIds.push(folderId);
+
+        // Calculate total size
+        const sizeResult = await queryOne(
+            `SELECT COALESCE(SUM(size), 0) as total_size FROM files 
+             WHERE folder_id IN (${allFolderIds.map(() => '?').join(',')}) AND is_deleted = 0`,
+            allFolderIds
+        );
+        const totalSize = sizeResult ? sizeResult.total_size : 0;
+
+        // Delete physical files
+        const files = await query(
+            `SELECT storage_path FROM files WHERE folder_id IN (${allFolderIds.map(() => '?').join(',')})`,
+            allFolderIds
+        );
+
+        const storageBase = path.join(__dirname, '../../storage/node1');
+        for (const file of files) {
+            try {
+                const filePath = path.join(storageBase, file.storage_path);
+                if (fsSync.existsSync(filePath)) {
+                    await fs.unlink(filePath);
+                }
+            } catch (err) {
+                console.error('Error deleting file:', err);
+            }
+        }
+
+        // Delete files from database
+        if (allFolderIds.length > 0) {
+            await query(
+                `DELETE FROM files WHERE folder_id IN (${allFolderIds.map(() => '?').join(',')})`,
+                allFolderIds
+            );
+        }
+
+        // Delete folders from database
+        await query(
+            `DELETE FROM folders WHERE id IN (${allFolderIds.map(() => '?').join(',')})`,
+            allFolderIds
+        );
+
+        // Update user storage
+        await query(
+            'UPDATE users SET storage_used = GREATEST(0, storage_used - ?) WHERE id = ?',
+            [totalSize, userId]
+        );
+
+        console.log('✅ Folder deleted completely:', folder.name);
+
+        res.json({
+            success: true,
+            message: 'Folder deleted completely',
+            freed_space: totalSize
+        });
+
+    } catch (error) {
+        console.error('Delete folder completely error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete folder'
+        });
+    }
+}
+
 // Get all folders for user
 async function getFolders(req, res) {
     try {
-        console.log('🔍 req.user:', req.user);
+        const userId = req.user.id || req.user.userId;
         
-        if (!req.user || !req.user.id) {
+        if (!userId) {
             return res.status(401).json({
                 success: false,
-                message: 'Authentication required - user not found'
+                message: 'Authentication required'
             });
         }
         
-        const userId = req.user.id;
         const parentId = req.query.parent_id || null;
 
         let sql = `
@@ -69,7 +196,7 @@ async function getFolders(req, res) {
 // Get single folder
 async function getFolderById(req, res) {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user.userId;
         const folderId = req.params.id;
 
         const folder = await queryOne(
@@ -101,76 +228,84 @@ async function getFolderById(req, res) {
     }
 }
 
-// Create folder
+// Create folder - UPDATED
 async function createFolder(req, res) {
     try {
-        console.log('🔍 Create folder - req.user:', req.user);
+        const userId = req.user.id || req.user.userId;
         
-        if (!req.user || !req.user.id) {
+        if (!userId) {
             return res.status(401).json({
                 success: false,
                 message: 'Authentication required'
             });
         }
         
-        const userId = req.user.id;
         const { name, parent_id, color } = req.body;
 
-        if (!name || !name.trim()) {
+        if (!name || typeof name !== 'string' || !name.trim()) {
             return res.status(400).json({
                 success: false,
                 message: 'Folder name is required'
             });
         }
 
-        // Check if folder with same name exists in same parent
-        const existing = await queryOne(
-            'SELECT id FROM folders WHERE name = ? AND parent_id <=> ? AND user_id = ? AND is_deleted = 0',
-            [name.trim(), parent_id || null, userId]
-        );
+        const folderName = name.trim();
+        const parentIdValue = (parent_id && parent_id !== 'null' && parent_id !== null) ? parent_id : null;
+
+        // Check if folder exists
+        let checkSql = 'SELECT id, name FROM folders WHERE name = ? AND user_id = ? AND is_deleted = 0';
+        let checkParams = [folderName, userId];
+
+        if (parentIdValue) {
+            checkSql += ' AND parent_id = ?';
+            checkParams.push(parentIdValue);
+        } else {
+            checkSql += ' AND parent_id IS NULL';
+        }
+
+        const existing = await queryOne(checkSql, checkParams);
 
         if (existing) {
-            return res.status(400).json({
-                success: false,
-                message: 'Folder with this name already exists'
+            // Return existing folder info
+            return res.json({
+                success: true,
+                message: 'Folder already exists',
+                folder: existing,
+                existing: true
             });
         }
 
         // Build folder path
         let folderPath = '/';
-        if (parent_id) {
+        if (parentIdValue) {
             const parentFolder = await queryOne(
                 'SELECT path FROM folders WHERE id = ? AND user_id = ?',
-                [parent_id, userId]
+                [parentIdValue, userId]
             );
             if (parentFolder) {
-                folderPath = parentFolder.path + '/' + name.trim();
+                folderPath = parentFolder.path + '/' + folderName;
+            } else {
+                folderPath = '/' + folderName;
             }
         } else {
-            folderPath = '/' + name.trim();
+            folderPath = '/' + folderName;
         }
 
         const result = await query(
             'INSERT INTO folders (name, parent_id, user_id, path, color, is_deleted) VALUES (?, ?, ?, ?, ?, 0)',
-            [name.trim(), parent_id || null, userId, folderPath, color || null]
+            [folderName, parentIdValue, userId, folderPath, color || null]
         );
 
-        // Log activity
-        await query(
-            `INSERT INTO activity_log (user_id, action_type, target_type, target_id, target_name, ip_address)
-             VALUES (?, 'create_folder', 'folder', ?, ?, ?)`,
-            [userId, result.insertId, name.trim(), req.ip]
-        );
+        console.log('✅ Folder created:', { id: result.insertId, name: folderName });
 
         res.status(201).json({
             success: true,
             message: 'Folder created successfully',
             folder: {
                 id: result.insertId,
-                name: name.trim(),
-                parent_id: parent_id || null,
-                path: folderPath,
-                color: color || null
+                name: folderName,
+                parent_id: parentIdValue,
+                path: folderPath
             }
         });
 
@@ -178,7 +313,7 @@ async function createFolder(req, res) {
         console.error('Create folder error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to create folder'
+            message: 'Failed to create folder: ' + error.message
         });
     }
 }
@@ -186,7 +321,7 @@ async function createFolder(req, res) {
 // Rename folder
 async function renameFolder(req, res) {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user.userId;
         const folderId = req.params.id;
         const { new_name } = req.body;
 
@@ -209,7 +344,6 @@ async function renameFolder(req, res) {
             });
         }
 
-        // Check for duplicate name in same location
         const existing = await queryOne(
             'SELECT id FROM folders WHERE name = ? AND parent_id <=> ? AND user_id = ? AND id != ? AND is_deleted = 0',
             [new_name.trim(), folder.parent_id, userId, folderId]
@@ -222,7 +356,6 @@ async function renameFolder(req, res) {
             });
         }
 
-        // Update folder path
         const oldPath = folder.path;
         const newPath = oldPath.replace(new RegExp(folder.name + '$'), new_name.trim());
 
@@ -231,17 +364,9 @@ async function renameFolder(req, res) {
             [new_name.trim(), newPath, folderId]
         );
 
-        // Update paths of all subfolders
         await query(
             'UPDATE folders SET path = REPLACE(path, ?, ?) WHERE path LIKE ? AND user_id = ?',
             [oldPath, newPath, oldPath + '/%', userId]
-        );
-
-        // Log activity
-        await query(
-            `INSERT INTO activity_log (user_id, action_type, target_type, target_id, target_name, details)
-             VALUES (?, 'rename', 'folder', ?, ?, ?)`,
-            [userId, folderId, new_name.trim(), JSON.stringify({ old_name: folder.name })]
         );
 
         res.json({
@@ -258,15 +383,12 @@ async function renameFolder(req, res) {
     }
 }
 
-// Delete folder (move to trash) - ✅ STORAGE UPDATED BY STORED PROCEDURE
+// Delete folder (move to trash)
 async function deleteFolder(req, res) {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user.userId;
         const folderId = req.params.id;
 
-        console.log('🗑️ Moving folder to trash:', folderId);
-
-        // Check if folder exists
         const folder = await queryOne(
             'SELECT * FROM folders WHERE id = ? AND user_id = ? AND is_deleted = 0',
             [folderId, userId]
@@ -279,37 +401,24 @@ async function deleteFolder(req, res) {
             });
         }
 
-        // Get user's trash settings
         const settings = await queryOne(
             'SELECT auto_delete_trash_days FROM user_settings WHERE user_id = ?',
             [userId]
         ) || { auto_delete_trash_days: 30 };
 
-        // ✅ Use stored procedure (handles storage update automatically)
         const [result] = await query(
             'CALL MoveToTrash(?, ?, ?, ?)',
             ['folder', folderId, userId, settings.auto_delete_trash_days]
         );
 
-        // Get updated storage info
         const user = await queryOne(
             'SELECT storage_used, storage_quota FROM users WHERE id = ?',
             [userId]
         );
 
-        const freedSpace = result && result[0] ? result[0].freed_space : 0;
-        const filesDeleted = result && result[0] ? result[0].files_deleted : 0;
-
-        console.log(`🗑️ Folder "${folder.name}" moved to trash`);
-        console.log(`💾 Storage freed: ${freedSpace} bytes (${filesDeleted} files)`);
-        console.log(`💾 Current storage: ${user.storage_used} bytes`);
-
         res.json({
             success: true,
-            message: `Folder moved to trash. Will be permanently deleted in ${settings.auto_delete_trash_days} days.`,
-            auto_delete_days: settings.auto_delete_trash_days,
-            freed_space: freedSpace,
-            files_deleted: filesDeleted,
+            message: `Folder moved to trash`,
             storage: {
                 used: user.storage_used,
                 quota: user.storage_quota
@@ -325,31 +434,23 @@ async function deleteFolder(req, res) {
     }
 }
 
-// Restore folder from trash - ✅ STORAGE UPDATED BY STORED PROCEDURE
+// Restore folder from trash
 async function restoreFolder(req, res) {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user.userId;
         const trashId = req.params.trashId;
 
-        console.log('♻️ Restoring folder from trash:', trashId);
-
-        // ✅ Use stored procedure (handles storage update automatically)
         const [result] = await query('CALL RestoreFromTrash(?, ?)', [trashId, userId]);
 
         if (result && result[0] && result[0].status === 'Success') {
-            // Get updated storage info
             const user = await queryOne(
                 'SELECT storage_used, storage_quota FROM users WHERE id = ?',
                 [userId]
             );
 
-            console.log(`♻️ Folder restored, storage added back: ${result[0].restored_space || 0} bytes`);
-            console.log(`💾 Current storage: ${user.storage_used} bytes`);
-
             res.json({
                 success: true,
                 message: 'Folder restored successfully',
-                restored_space: result[0].restored_space || 0,
                 storage: {
                     used: user.storage_used,
                     quota: user.storage_quota
@@ -371,15 +472,12 @@ async function restoreFolder(req, res) {
     }
 }
 
-// Permanently delete folder - ✅ NO STORAGE UPDATE (already freed)
+// Permanently delete folder
 async function permanentDeleteFolder(req, res) {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user.userId;
         const trashId = req.params.trashId;
 
-        console.log('🔥 Permanently deleting folder from trash:', trashId);
-
-        // Get trash item details first
         const trashItem = await queryOne(
             'SELECT * FROM trash WHERE id = ? AND deleted_by = ? AND item_type = "folder"',
             [trashId, userId]
@@ -392,40 +490,12 @@ async function permanentDeleteFolder(req, res) {
             });
         }
 
-        // Get all files in folder and subfolders
-        const allFolderIds = await getAllSubfolderIds(trashItem.folder_id, userId);
-        allFolderIds.push(trashItem.folder_id);
-
-        const filesInFolders = await query(
-            `SELECT storage_path FROM files WHERE folder_id IN (${allFolderIds.map(() => '?').join(',')})`,
-            allFolderIds
-        );
-
-        // Delete physical files
-        const { STORAGE_PATHS } = require('../config/storage');
-        for (const file of filesInFolders) {
-            try {
-                const fullPath = path.join(STORAGE_PATHS.node1, file.storage_path);
-                if (fsSync.existsSync(fullPath)) {
-                    await fs.unlink(fullPath);
-                    console.log('🗑️ Physical file deleted:', fullPath);
-                }
-            } catch (fileError) {
-                console.error('Error deleting physical file:', fileError);
-            }
-        }
-
-        // ✅ Use stored procedure (NO storage update - already freed when moved to trash)
         const [result] = await query('CALL PermanentDelete(?, ?)', [trashId, userId]);
 
         if (result && result[0] && result[0].status === 'Success') {
-            console.log('🔥 Folder permanently deleted (storage already freed)');
-
             res.json({
                 success: true,
-                message: 'Folder permanently deleted',
-                freed_space: result[0].freed_space,
-                deleted_files: filesInFolders.length
+                message: 'Folder permanently deleted'
             });
         } else {
             res.status(404).json({
@@ -443,7 +513,7 @@ async function permanentDeleteFolder(req, res) {
     }
 }
 
-// Helper: Get all subfolder IDs recursively
+// Helper: Get all subfolder IDs
 async function getAllSubfolderIds(folderId, userId) {
     const subfolders = await query(
         'SELECT id FROM folders WHERE parent_id = ? AND user_id = ?',
@@ -451,7 +521,6 @@ async function getAllSubfolderIds(folderId, userId) {
     );
 
     let allIds = [];
-
     for (const subfolder of subfolders) {
         allIds.push(subfolder.id);
         const childIds = await getAllSubfolderIds(subfolder.id, userId);
@@ -464,7 +533,7 @@ async function getAllSubfolderIds(folderId, userId) {
 // Move folder
 async function moveFolder(req, res) {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user.userId;
         const folderId = req.params.id;
         const { parent_id } = req.body;
 
@@ -480,37 +549,19 @@ async function moveFolder(req, res) {
             });
         }
 
-        // Prevent moving folder into itself or its subfolder
         if (parent_id) {
             const allSubfolderIds = await getAllSubfolderIds(folderId, userId);
             if (allSubfolderIds.includes(parseInt(parent_id)) || parseInt(parent_id) === folderId) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Cannot move folder into itself or its subfolder'
-                });
-            }
-
-            // Check if target parent exists
-            const parentFolder = await queryOne(
-                'SELECT * FROM folders WHERE id = ? AND user_id = ? AND is_deleted = 0',
-                [parent_id, userId]
-            );
-
-            if (!parentFolder) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Target folder not found'
+                    message: 'Cannot move folder into itself'
                 });
             }
         }
 
-        // Update folder path
         let newPath;
         if (parent_id) {
-            const parentFolder = await queryOne(
-                'SELECT path FROM folders WHERE id = ?',
-                [parent_id]
-            );
+            const parentFolder = await queryOne('SELECT path FROM folders WHERE id = ?', [parent_id]);
             newPath = parentFolder.path + '/' + folder.name;
         } else {
             newPath = '/' + folder.name;
@@ -523,17 +574,9 @@ async function moveFolder(req, res) {
             [parent_id || null, newPath, folderId]
         );
 
-        // Update paths of all subfolders
         await query(
             'UPDATE folders SET path = REPLACE(path, ?, ?) WHERE path LIKE ? AND user_id = ?',
             [oldPath, newPath, oldPath + '/%', userId]
-        );
-
-        // Log activity
-        await query(
-            `INSERT INTO activity_log (user_id, action_type, target_type, target_id, target_name, details)
-             VALUES (?, 'move', 'folder', ?, ?, ?)`,
-            [userId, folderId, folder.name, JSON.stringify({ old_parent: folder.parent_id, new_parent: parent_id })]
         );
 
         res.json({
@@ -550,70 +593,44 @@ async function moveFolder(req, res) {
     }
 }
 
-// Get folder contents (files and subfolders)
+// Get folder contents
 async function getFolderContents(req, res) {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user.userId;
         const folderId = req.params.id;
 
-        // Verify folder exists and belongs to user
         const folder = await queryOne(
             'SELECT * FROM folders WHERE id = ? AND user_id = ? AND is_deleted = 0',
             [folderId, userId]
         );
 
         if (!folder) {
-            return res.status(404).json({
-                success: false,
-                message: 'Folder not found'
-            });
+            return res.status(404).json({ success: false, message: 'Folder not found' });
         }
 
-        // Get subfolders
         const subfolders = await query(
-            `SELECT 
-                f.id, f.name, f.parent_id, f.path, f.color, f.created_at, f.updated_at,
-                (SELECT COUNT(*) FROM files WHERE folder_id = f.id AND is_deleted = 0) as file_count,
-                (SELECT COUNT(*) FROM folders sub WHERE sub.parent_id = f.id AND is_deleted = 0) as subfolder_count,
-                EXISTS(SELECT 1 FROM favorites fav WHERE fav.folder_id = f.id AND fav.user_id = ?) as is_favorite
-            FROM folders f
-            WHERE f.parent_id = ? AND f.user_id = ? AND f.is_deleted = 0
-            ORDER BY f.name ASC`,
-            [userId, folderId, userId]
+            `SELECT f.*, (SELECT COUNT(*) FROM files WHERE folder_id = f.id AND is_deleted = 0) as file_count
+             FROM folders f WHERE f.parent_id = ? AND f.user_id = ? AND f.is_deleted = 0 ORDER BY f.name`,
+            [folderId, userId]
         );
 
-        // Get files
         const files = await query(
-            `SELECT 
-                f.id, f.filename, f.original_name, f.mime_type, f.size, 
-                f.created_at, f.updated_at, f.download_count,
-                EXISTS(SELECT 1 FROM favorites fav WHERE fav.file_id = f.id AND fav.user_id = ?) as is_favorite
-            FROM files f
-            WHERE f.folder_id = ? AND f.user_id = ? AND f.is_deleted = 0
-            ORDER BY f.original_name ASC`,
-            [userId, folderId, userId]
+            'SELECT * FROM files WHERE folder_id = ? AND user_id = ? AND is_deleted = 0 ORDER BY original_name',
+            [folderId, userId]
         );
 
-        res.json({
-            success: true,
-            folder: folder,
-            folders: subfolders,
-            files: files
-        });
+        res.json({ success: true, folder, folders: subfolders, files });
 
     } catch (error) {
         console.error('Get folder contents error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to get folder contents'
-        });
+        res.status(500).json({ success: false, message: 'Failed to get folder contents' });
     }
 }
 
-// Get folder breadcrumb (path navigation)
+// Get folder breadcrumb
 async function getFolderBreadcrumb(req, res) {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user.userId;
         const folderId = req.params.id;
 
         if (!folderId || folderId === 'null' || folderId === 'root') {
@@ -629,15 +646,11 @@ async function getFolderBreadcrumb(req, res) {
         );
 
         if (!folder) {
-            return res.status(404).json({
-                success: false,
-                message: 'Folder not found'
-            });
+            return res.status(404).json({ success: false, message: 'Folder not found' });
         }
 
         const breadcrumb = [{ id: null, name: 'My Files', path: '/' }];
         
-        // Parse path to build breadcrumb
         if (folder.path && folder.path !== '/') {
             const pathParts = folder.path.split('/').filter(p => p);
             let currentPath = '';
@@ -649,182 +662,76 @@ async function getFolderBreadcrumb(req, res) {
                     [currentPath, userId]
                 );
                 if (pathFolder) {
-                    breadcrumb.push({
-                        id: pathFolder.id,
-                        name: pathFolder.name,
-                        path: currentPath
-                    });
+                    breadcrumb.push({ id: pathFolder.id, name: pathFolder.name, path: currentPath });
                 }
             }
         }
 
-        res.json({
-            success: true,
-            breadcrumb: breadcrumb
-        });
+        res.json({ success: true, breadcrumb });
 
     } catch (error) {
         console.error('Get breadcrumb error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to get folder breadcrumb'
-        });
+        res.status(500).json({ success: false, message: 'Failed to get breadcrumb' });
     }
 }
 
 // Download folder as ZIP
 async function downloadFolder(req, res) {
+    // ... keep existing code
     const folderId = req.params.id;
-    const userId = req.user.id;
+    const userId = req.user.id || req.user.userId;
 
     try {
-        console.log(`📦 Downloading folder ${folderId} as ZIP for user ${userId}`);
-
-        // Verify folder exists and belongs to user
         const folder = await queryOne(
             'SELECT * FROM folders WHERE id = ? AND user_id = ? AND is_deleted = 0',
             [folderId, userId]
         );
 
         if (!folder) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Folder not found' 
-            });
+            return res.status(404).json({ success: false, message: 'Folder not found' });
         }
 
         const folderName = folder.name.replace(/[^a-z0-9_-]/gi, '_');
-
-        // Set response headers
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${folderName}.zip"`);
 
-        // Create ZIP archive
-        const archive = archiver('zip', {
-            zlib: { level: 9 }
-        });
-
-        // Handle archive errors
-        archive.on('error', (err) => {
-            console.error('❌ Archive error:', err);
-            if (!res.headersSent) {
-                res.status(500).json({ 
-                    success: false, 
-                    message: 'Failed to create ZIP file',
-                    error: err.message 
-                });
-            }
-        });
-
-        // Track progress
-        archive.on('progress', (progress) => {
-            console.log(`📦 Archiving: ${progress.entries.processed} files processed`);
-        });
-
-        // Pipe archive data to response
+        const archive = archiver('zip', { zlib: { level: 9 } });
         archive.pipe(res);
-
-        // Add folder contents to archive recursively
-        const filesAdded = await addFolderToArchive(archive, folderId, userId, '');
-
-        // Finalize the archive
+        await addFolderToArchive(archive, folderId, userId, '');
         await archive.finalize();
 
-        console.log(`✅ Folder "${folderName}" downloaded as ZIP (${filesAdded} files)`);
-
     } catch (error) {
-        console.error('❌ Download folder error:', error);
+        console.error('Download folder error:', error);
         if (!res.headersSent) {
-            res.status(500).json({ 
-                success: false, 
-                message: 'Server error during folder download',
-                error: error.message 
-            });
+            res.status(500).json({ success: false, message: 'Download failed' });
         }
     }
 }
 
-// Helper: Add folder to archive recursively
 async function addFolderToArchive(archive, folderId, userId, basePath) {
-    let filesAdded = 0;
-    const { STORAGE_PATHS } = require('../config/storage');
+    const storageBase = path.join(__dirname, '../../storage/node1');
+    
+    const files = await query(
+        'SELECT * FROM files WHERE folder_id = ? AND user_id = ? AND is_deleted = 0',
+        [folderId, userId]
+    );
 
-    try {
-        // Get all files in this folder
-        const files = await query(
-            'SELECT * FROM files WHERE folder_id = ? AND user_id = ? AND is_deleted = 0',
-            [folderId, userId]
-        );
-
-        // Add each file to archive
-        for (const file of files) {
-            try {
-                // Try all storage nodes
-                const storagePaths = [
-                    STORAGE_PATHS.node1,
-                    STORAGE_PATHS.node2,
-                    STORAGE_PATHS.node3
-                ];
-
-                let fileFound = false;
-                let filePath = null;
-
-                for (const storagePath of storagePaths) {
-                    filePath = path.join(storagePath, file.storage_path);
-                    
-                    if (fsSync.existsSync(filePath)) {
-                        fileFound = true;
-                        break;
-                    }
-                }
-
-                if (fileFound && filePath) {
-                    const fileName = file.original_name || file.filename;
-                    const archivePath = basePath ? path.join(basePath, fileName) : fileName;
-                    
-                    // Add file to archive
-                    archive.file(filePath, { name: archivePath });
-                    filesAdded++;
-                    
-                    console.log(`📄 Added to ZIP: ${archivePath}`);
-                } else {
-                    console.warn(`⚠️ File not found in storage: ${file.original_name}`);
-                }
-
-            } catch (fileError) {
-                console.error(`❌ Error adding file ${file.original_name}:`, fileError);
-            }
+    for (const file of files) {
+        const filePath = path.join(storageBase, file.storage_path);
+        if (fsSync.existsSync(filePath)) {
+            const archivePath = basePath ? path.join(basePath, file.original_name) : file.original_name;
+            archive.file(filePath, { name: archivePath });
         }
+    }
 
-        // Get all subfolders
-        const subfolders = await query(
-            'SELECT * FROM folders WHERE parent_id = ? AND user_id = ? AND is_deleted = 0',
-            [folderId, userId]
-        );
+    const subfolders = await query(
+        'SELECT * FROM folders WHERE parent_id = ? AND user_id = ? AND is_deleted = 0',
+        [folderId, userId]
+    );
 
-        // Recursively add subfolders
-        for (const subfolder of subfolders) {
-            const subfolderPath = basePath 
-                ? path.join(basePath, subfolder.name) 
-                : subfolder.name;
-            
-            console.log(`📁 Processing subfolder: ${subfolderPath}`);
-            
-            const subFilesAdded = await addFolderToArchive(
-                archive, 
-                subfolder.id, 
-                userId, 
-                subfolderPath
-            );
-            
-            filesAdded += subFilesAdded;
-        }
-
-        return filesAdded;
-
-    } catch (error) {
-        console.error('❌ Error in addFolderToArchive:', error);
-        throw error;
+    for (const subfolder of subfolders) {
+        const subPath = basePath ? path.join(basePath, subfolder.name) : subfolder.name;
+        await addFolderToArchive(archive, subfolder.id, userId, subPath);
     }
 }
 
@@ -840,5 +747,7 @@ module.exports = {
     getFolderContents,
     getFolderBreadcrumb,
     getAllSubfolderIds,
-    downloadFolder
+    downloadFolder,
+    checkFolderExists,          // ✅ NEW
+    deleteFolderCompletely      // ✅ NEW
 };
