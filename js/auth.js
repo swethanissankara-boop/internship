@@ -1,19 +1,11 @@
-/* ============================================
-   CLOUDSHARE - AUTHENTICATION
-   ============================================ */
-
-// ============================================
-// API CONFIGURATION (Dynamic URL)
-// ============================================
 const getAPIUrl = () => {
     const hostname = window.location.hostname;
-    const port = 5000;
-    
+    const port = window.location.port;
+    const protocol = window.location.protocol;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return `http://localhost:${port}/api`;
-    } else {
-        return `http://${hostname}:${port}/api`;
+        return port ? `${protocol}//localhost:${port}/api` : `${protocol}//localhost/api`;
     }
+    return port ? `${protocol}//${hostname}:${port}/api` : `${protocol}//${hostname}/api`;
 };
 
 const API_URL = getAPIUrl();
